@@ -1,0 +1,14 @@
+#!/bin/sh
+# mount files from sshme server
+
+SSH_FORWARD_PORT=12322
+WORK_SPACE=/home/ride/projects
+MOUNT_TARGET=~/sshfs
+
+mkdir -p ${MOUNT_TARGET}
+
+sshfs \
+  -o auto_unmount \
+  -o StrictHostKeyChecking=no \
+  -p ${SSH_FORWARD_PORT} \
+  ride@localhost:${WORK_SPACE} ${MOUNT_TARGET}

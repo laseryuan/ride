@@ -1,0 +1,13 @@
+tasks:
+  -
+    name: pull image
+    init: |
+      (sudo docker-up &>/dev/null & ) ;
+      echo 'Waiting for docker daemon to start' &&
+      until docker info &> /dev/null; do sleep 1; done;
+      echo 'Docker daemon is ready' &&
+      docker pull lasery/ride &&
+      sudo pkill docker-up
+    command: |
+      docker run lasery/ride install | sh &&
+      chmod a+x /workspace/ride

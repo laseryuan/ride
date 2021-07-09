@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if pgrep -x "sshd" >/dev/null
+then
+  echo "sshd already is running"
+else
+  echo "start sshd server"
+  # build authorized_key
+  sudo chown ride:ride /tmp
+  chmod 755 /tmp
+
+  curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys
+  chmod 600 /tmp/authorized_keys
+
+  sudo /usr/sbin/sshd -o AuthorizedKeysFile=/tmp/authorized_keys
+fi

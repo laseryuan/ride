@@ -1,0 +1,38 @@
+"##############################################################"
+" vim: set foldmarker={,} foldlevel=0 foldmethod=marker :
+"
+" DD Vim Configuration
+"
+" Danilo Dellaquila K-Gigas Computers S.L.
+"
+" This is the personal Vim configuration of Danilo Dellaquila.
+"
+" File: vimrc
+"
+"##############################################################"
+
+" General Settings {
+    " Set DD Vim Configuration path
+    let $DDPATH=$HOME."/.vim"
+
+    " Leader key
+    let mapleader = ","
+    let localmapleader=","
+    "
+
+    "colorscheme compatible with tmux
+    set background=dark
+    set t_Co=256
+
+" }
+
+    source $DDPATH/plugins.vim
+    filetype plugin indent on " Need to run after vundle. Do filetype detection and load custom file plugins and indent files
+
+    source $DDPATH/abbreviations.vim
+
+    source $DDPATH/filetypes.vim
+
+    source $DDPATH/custom.vim
+
+    source $DDPATH/mappings.vim

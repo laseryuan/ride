@@ -1,0 +1,127 @@
+{{#ARCH.is_arm}}
+FROM lasery/krypton as builder
+{{/ARCH.is_arm}}
+
+FROM {{ARCH.images.base}}
+
+ENV LANG C.UTF-8
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install dependency
+RUN apt-get update && apt-get install -y \
+      openssh-server \
+      python3-pip \
+      sudo gosu \
+      ack-grep \
+      apt-transport-https \
+      ca-certificates \
+      cryptsetup \
+      curl \
+      git \
+      git-crypt \
+      locales \
+      stow \
+      sshfs \
+      tmux \
+      vim
+
+# Install github action cache dependency
+{{#ARCH.is_amd}}
+RUN apt install zstd
+{{/ARCH.is_amd}}
+
+## Install mbuild dependency
+RUN pip3 install \
+      `# mbuild dependency`\
+      chevron pyyaml argparse \
+      `# python codebench depencency`\
+      ipdb pytest pytest-mock behave \
+      ``
+
+# Install krypton
+{{#ARCH.is_amd}}
+RUN curl https://krypt.co/kr | sh
+{{/ARCH.is_amd}}
+{{#ARCH.is_arm}}
+COPY --from=builder /usr/bin/kr /usr/bin/krd /usr/bin/krssh /usr/bin/krgpg /usr/bin/
+{{/ARCH.is_arm}}
+
+# Install docker client
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+{{#ARCH.is_amd}}
+RUN add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+{{/ARCH.is_amd}}
+{{#ARCH.is_arm}}
+RUN apt-get install lsb-release
+RUN echo "deb [arch=armhf] https://download.docker.com/linux/raspbian $(lsb_release -cs) stable" >> /etc/apt/sources.list.d/docker.list
+{{/ARCH.is_arm}}
+RUN apt-get update && apt-get install -y \
+      docker-ce-cli
+
+# Config ssh server
+RUN mkdir -p /var/run/sshd
+
+# Create ride user with sudo previledge
+ENV RIDE_USER=ride RIDE_USER_ID=1000 RIDE_USER_GID=1000
+
+RUN groupadd --gid "${RIDE_USER_GID}" "${RIDE_USER}" && \
+    useradd \
+      --uid ${RIDE_USER_ID} \
+      --gid ${RIDE_USER_GID} \
+      --groups sudo \
+      --create-home --home-dir /home/ride \
+      --shell /bin/bash \
+      ${RIDE_USER}
+
+RUN echo "ride ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ride
+
+USER ride
+WORKDIR /home/ride
+RUN mkdir /home/ride/projects
+
+# Config docker
+RUN mkdir /home/ride/.docker && chown ride:ride /home/ride/.docker
+
+# Cofig git
+RUN git config --global user.email "{{GIT_EMAIL}}" && \
+  git config --global user.name "{{GIT_NAME}}"
+
+# Config vim
+COPY --chown=ride .dotfiles/vim .dotfiles/vim
+RUN cd .dotfiles && stow -t ~ vim
+
+RUN set -ex; \
+    git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
+    vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall; \
+    chmod a+w -R /home/ride
+
+# Config tmux bash
+COPY --chown=ride .dotfiles/tmux .dotfiles/tmux
+COPY --chown=ride .dotfiles/bash .dotfiles/bash
+RUN rm ~/.bashrc
+RUN cd .dotfiles && stow -t ~ tmux bash
+RUN chmod a+w -R /home/ride
+
+# user-mapping.sh
+COPY --chown=ride mapuser/user-mapping.sh /
+RUN chmod u+x /user-mapping.sh
+
+# mbuild
+COPY --chown=ride mbuild /home/ride/mbuild
+COPY --chown=ride mbuild.yml /home/ride/
+
+# copy RIDE files
+COPY --chown=ride ./docker-entrypoint.sh /
+COPY --chown=ride ./README.md /
+COPY --chown=ride doc/ /doc/
+COPY --chown=ride bin/ /usr/local/bin/
+
+# Tests
+RUN python3 -m pytest /home/ride/mbuild/utils/build.py
+
+USER root
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+ENV SHELL /bin/bash
+CMD ["help"]
+EXPOSE 22

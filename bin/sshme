@@ -1,0 +1,5 @@
+#!/bin/sh
+sshstart
+
+# connect to sish server as target
+ssh -o StrictHostKeyChecking=no -p 2222 -R :22:localhost:22 sish.unsown.top

@@ -1,0 +1,71 @@
+on: [push]
+
+env:
+  REPO: ${{ github.event.repository.name }}
+  DEBUG_MODE: ${{ contains(github.event.head_commit.message, 'ci debug') }}
+
+jobs:
+  my_job:
+    runs-on: ubuntu-latest
+    container:
+      image: lasery/ride
+      options: >-
+        -v "/home/runner/work/ride/ride":"/home/ride/projects/ride"
+        -e HOST_NAME=${{ github.event.repository.name }}
+        -e HOST_USER_NAME=root
+        -e HOST_USER_ID=0
+        -e HOST_USER_GID=0
+        -e HOST_DOCKER_ID=121
+        --privileged
+
+    steps:
+      # -
+        # name: Find Docker Host IP
+        # uses: addnab/docker-run-action@v1
+        # with:
+          # image: alpine:latest
+          # run: apk update > /dev/null && apk add iproute2 > /dev/null && ip -4 route show default | cut -d' ' -f3
+      -
+        name: checkout repo
+        uses: actions/checkout@v2
+      -  # https://github.com/docker/setup-qemu-action#usage
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -  # https://github.com/marketplace/actions/docker-setup-buildx
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -  # https://github.com/docker/login-action#docker-hub
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: "Debug:Cache tmp directory"
+        if: env.DEBUG_MODE == 'true'
+        id: cache-tmp
+        uses: actions/cache@v2
+        with:
+          path: .tmp
+          key: cache-tmp
+      -
+        name: "Debug: let ride own repo"
+        if: env.DEBUG_MODE == 'true'
+        run: chown -R ride:ride $GITHUB_WORKSPACE
+      -
+        name: "Debug: symlink kr"
+        if: env.DEBUG_MODE == 'true'
+        run: ln -s $GITHUB_WORKSPACE/.tmp/.kr /home/ride/.kr
+      -
+        name: "Debug with sshme"
+        if: env.DEBUG_MODE == 'true'
+        run: cd /home/ride/projects/ride && /docker-entrypoint.sh ride sshme || true
+      -
+        name: Build with mbuild
+        run: python3 /home/ride/mbuild/utils/build.py docker
+      -
+        name: Push with mbuild
+        run: python3 /home/ride/mbuild/utils/build.py push --only
+      -
+        name: Deply with mbuild
+        run: python3 /home/ride/mbuild/utils/build.py deploy --only

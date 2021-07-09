@@ -1,0 +1,21 @@
+#!/bin/bash
+
+SSHME_SERVER=$1
+shift
+
+if [[ "$1" == "mount" ]]; then
+  sshstart
+
+  SSH_FORWARD_PORT=12322
+  ssh \
+    -o StrictHostKeyChecking=no \
+    -J sish.unsown.top:2222 \
+    -R ${SSH_FORWARD_PORT}:localhost:22 \
+    ride@${SSHME_SERVER}
+else
+  ssh \
+    -o StrictHostKeyChecking=no \
+    -J sish.unsown.top:2222 \
+    ride@${SSHME_SERVER}
+fi
+
