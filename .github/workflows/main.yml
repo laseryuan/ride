@@ -42,6 +42,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
+        name: "check default builder"
+        run: |
+          cd ~
+          pwd
+          echo $HOME
+          ln -s /github/home/.docker /home/ride/.docker
+      -
         name: "Debug:Cache tmp directory"
         if: env.DEBUG_MODE == 'true'
         id: cache-tmp
@@ -62,9 +69,10 @@ jobs:
         env:
           builder: ${{ steps.buildx.outputs.name }}
         if: env.DEBUG_MODE == 'true'
+        working-directory: /home/ride/projects
         run: |
-          echo builder: ${{ steps.buildx.outputs.name }}
-          cd /home/ride/projects/ride && /docker-entrypoint.sh ride sshme || true
+          ls /home/ride/.ssh -al
+          /docker-entrypoint.sh ride sshme || true
       -
         name: Build with mbuild
         run: python3 /home/ride/mbuild/utils/build.py docker
