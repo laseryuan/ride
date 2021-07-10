@@ -85,7 +85,6 @@ RUN git config --global user.email "{{GIT_EMAIL}}" && \
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
 RUN mkdir projects && \
-    mkdir .kr && \
     mkdir .ssh && \
     cp .dotfiles/ssh/config .ssh/ && \
     rm ~/.bashrc && \
