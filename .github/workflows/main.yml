@@ -33,6 +33,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
       -  # https://github.com/marketplace/actions/docker-setup-buildx
         name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v1
       -  # https://github.com/docker/login-action#docker-hub
         name: Login to Docker Hub
@@ -58,8 +59,12 @@ jobs:
         run: ln -s $GITHUB_WORKSPACE/.tmp/.kr /home/ride/.kr
       -
         name: "Debug with sshme"
+        env:
+          builder: ${{ steps.buildx.outputs.name }}
         if: env.DEBUG_MODE == 'true'
-        run: cd /home/ride/projects/ride && /docker-entrypoint.sh ride sshme || true
+        run: |
+          echo builder: ${{ steps.buildx.outputs.name }}
+          cd /home/ride/projects/ride && /docker-entrypoint.sh ride sshme || true
       -
         name: Build with mbuild
         run: python3 /home/ride/mbuild/utils/build.py docker

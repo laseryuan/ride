@@ -77,30 +77,31 @@ RUN echo "ride ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ride
 
 USER ride
 WORKDIR /home/ride
-RUN mkdir /home/ride/projects
 
-# Config docker
-RUN mkdir /home/ride/.docker && chown ride:ride /home/ride/.docker
-
-# Cofig git
+# Config git
 RUN git config --global user.email "{{GIT_EMAIL}}" && \
   git config --global user.name "{{GIT_NAME}}"
 
-# Config vim
-COPY --chown=ride .dotfiles/vim .dotfiles/vim
-RUN cd .dotfiles && stow -t ~ vim
+# Dotfiles
+COPY --chown=ride .dotfiles .dotfiles
+RUN mkdir projects && \
+    mkdir .kr && \
+    mkdir .ssh && \
+    cp .dotfiles/ssh/config .ssh/ && \
+    rm ~/.bashrc && \
+    cd .dotfiles && \
+    stow -t ~ vim tmux bash && \
+    ``
 
 RUN set -ex; \
     git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
     vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall; \
     chmod a+w -R /home/ride
 
-# Config tmux bash
-COPY --chown=ride .dotfiles/tmux .dotfiles/tmux
-COPY --chown=ride .dotfiles/bash .dotfiles/bash
-RUN rm ~/.bashrc
-RUN cd .dotfiles && stow -t ~ tmux bash
-RUN chmod a+w -R /home/ride
+# Give ssh proper permission
+RUN chmod 700 .ssh && \
+    chmod 600 .ssh/config && \
+    ``
 
 # user-mapping.sh
 COPY --chown=ride mapuser/user-mapping.sh /
