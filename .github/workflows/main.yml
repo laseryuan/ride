@@ -63,7 +63,7 @@ jobs:
       -
         name: "Debug: symlink kr"
         if: env.DEBUG_MODE == 'true'
-        run: ln -s $GITHUB_WORKSPACE/.tmp/.kr /home/ride/.kr
+        run: ln -s $GITHUB_WORKSPACE/.tmp/.kr /home/ride/
       -
         name: "Debug with sshme"
         env:
