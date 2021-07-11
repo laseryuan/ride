@@ -74,6 +74,7 @@ RUN groupadd --gid "${RIDE_USER_GID}" "${RIDE_USER}" && \
       ${RIDE_USER}
 
 RUN echo "ride ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ride
+RUN echo 'Defaults    env_keep += "HOME"' >> /etc/sudoers.d/ride
 
 USER ride
 WORKDIR /home/ride
