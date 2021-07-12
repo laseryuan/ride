@@ -121,6 +121,7 @@ COPY --chown=ride bin/ /usr/local/bin/
 RUN python3 -m pytest /home/ride/mbuild/utils/build.py
 
 USER root
+ENV HOME /home/ride
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 ENV SHELL /bin/bash

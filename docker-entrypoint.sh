@@ -7,7 +7,7 @@ main() {
     ride)
       if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
         /user-mapping.sh
-        gosu ride open_tmux_vim.sh
+        open_tmux_vim.sh
       else
         /user-mapping.sh
         gosu ride open_tmux_vim.sh
