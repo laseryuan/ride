@@ -15,7 +15,7 @@ main() {
       ${CHANGE_USER} open_tmux_vim.sh
 
       shift
-      [ -n "$1" ] && { gosu ride "$@"; true; } || gosu ride tmux attach
+      [ -n "$1" ] && { ${CHANGE_USER} "$@"; true; } || ${CHANGE_USER} tmux attach
       ;;
     help)
       cat /README.md
