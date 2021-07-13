@@ -5,13 +5,15 @@ set -e
 main() {
   case "$1" in
     ride)
+      /user-mapping.sh
+
+      CHANGE_USER="gosu ride"
       if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
-        /user-mapping.sh
-        open_tmux_vim.sh
-      else
-        /user-mapping.sh
-        gosu ride open_tmux_vim.sh
+        CHANGE_USER=""
       fi
+
+      ${CHANGE_USER} open_tmux_vim.sh
+
       shift
       [ -n "$1" ] && { gosu ride "$@"; true; } || gosu ride tmux attach
       ;;
