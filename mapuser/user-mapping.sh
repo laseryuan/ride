@@ -22,6 +22,7 @@ fi
 if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
   echo "Changing root home directory ..."
   sed -i -e '/root/s!\(.*:\).*:\(.*\)!\1/home/ride:\2!' /etc/passwd
+  chown -R root:root /home/ride/.ssh
 else
   # reset user_?id to either new id or if empty old (still one of above
   # might not be set)
