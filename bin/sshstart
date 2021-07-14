@@ -6,7 +6,9 @@ then
 else
   echo "start sshd server"
   # build authorized_key
-  sudo chown ride:ride /tmp
+  if [[ $EUID -ne 0 ]]; then
+    sudo chown ride:ride /tmp
+  fi
   chmod 755 /tmp
 
   curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys
