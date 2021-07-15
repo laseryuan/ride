@@ -1,6 +1,15 @@
 #!/bin/bash
 
-SSHME_SERVER=$1
+first=$1
+arrIN=(${first//@/ })
+if [ -z "${arrIN[1]}"  ]; then
+  USER=ride
+  SSHME_SERVER=${arrIN[0]}
+else
+  USER=${arrIN[0]}
+  SSHME_SERVER=${arrIN[1]}
+fi
+
 shift
 
 if [[ "$1" == "mount" ]]; then
@@ -11,11 +20,11 @@ if [[ "$1" == "mount" ]]; then
     -o StrictHostKeyChecking=no \
     -J sish.unsown.top:2222 \
     -R ${SSH_FORWARD_PORT}:localhost:22 \
-    ride@${SSHME_SERVER}
+    ${USER}@${SSHME_SERVER}
 else
   ssh \
     -o StrictHostKeyChecking=no \
     -J sish.unsown.top:2222 \
-    ride@${SSHME_SERVER}
+    ${USER}@${SSHME_SERVER}
 fi
 
