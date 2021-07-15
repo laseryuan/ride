@@ -11,7 +11,9 @@ else
   fi
   chmod 755 /tmp
 
+  echo "force user tmux a"
   curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys
+  sed -i -e 's/^/command="tmux a" /' /tmp/authorized_keys
   chmod 600 /tmp/authorized_keys
 
   sudo /usr/sbin/sshd -o AuthorizedKeysFile=/tmp/authorized_keys
