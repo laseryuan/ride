@@ -16,5 +16,5 @@ else
   sed -i -e 's/^/command="tmux a" /' /tmp/authorized_keys
   chmod 600 /tmp/authorized_keys
 
-  sudo /usr/sbin/sshd -o AuthorizedKeysFile=/tmp/authorized_keys
+  sudo /usr/sbin/sshd -o AuthorizedKeysFile=/tmp/authorized_keys -o PasswordAuthentication=no
 fi
