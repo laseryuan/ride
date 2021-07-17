@@ -1,5 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 sshstart
 
+first=$1
+first=${first:-@sish}
+
+input=$first
+sep='@'
+case $input in
+  (*"$sep"*)
+    before=${input%%"$sep"*}
+    after=${input#*"$sep"}
+    ;;
+  (*)
+    before=$input
+    after=
+    ;;
+esac
+
+SSH_USER=$before
+SSH_SERVER=${after:-sish}
+
 # connect to sish server as target
-ssh -o StrictHostKeyChecking=no -p 2222 -R :22:localhost:22 sish.unsown.top
+ssh -o StrictHostKeyChecking=no -p 2222 -R "$SSH_USER":22:localhost:22 $SSH_SERVER.unsown.top
