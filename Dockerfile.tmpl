@@ -17,13 +17,15 @@ RUN apt-get update && apt-get install -y \
       ca-certificates \
       cryptsetup \
       curl \
+      netcat \
       git \
       git-crypt \
       locales \
       stow \
       sshfs \
       tmux \
-      vim
+      vim \
+      ``
 
 # Install github action cache dependency
 {{#ARCH.is_amd}}
