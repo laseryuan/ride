@@ -1,5 +1,11 @@
 #!/bin/bash
-sshstart
+
+if [[ "$1" == "mount" ]]; then
+  mount_flag=mount
+  shift
+fi
+
+sshstart $mount_flag
 
 first=$1
 first=${first:-@sish}

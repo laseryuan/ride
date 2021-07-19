@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ "$1" == "mount" ]]; then
+  mount_flag=mount
+  shift
+fi
+
 if pgrep -x "sshd" >/dev/null
 then
   echo "sshd already is running"
@@ -11,9 +16,11 @@ else
   fi
   chmod 755 /tmp
 
-  echo "force user tmux a"
   curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys
-  sed -i -e 's/^/command="tmux a" /' /tmp/authorized_keys
+  if [[ "$mount_flag" != "mount" ]]; then
+    echo "force user tmux a"
+    sed -i -e 's/^/command="tmux a" /' /tmp/authorized_keys
+  fi
   chmod 600 /tmp/authorized_keys
 
   sudo /usr/sbin/sshd -o AuthorizedKeysFile=/tmp/authorized_keys -o PasswordAuthentication=no

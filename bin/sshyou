@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ "$1" == "mount" ]]; then
+  mount_flag=mount
+  shift
+fi
+
 first=$1
 arrIN=(${first//@/ })
 if [ -z "${arrIN[1]}"  ]; then
@@ -12,8 +17,8 @@ fi
 
 shift
 
-if [[ "$1" == "mount" ]]; then
-  sshstart
+if [[ "$mount_flag" == "mount" ]]; then
+  sshstart $mount_flag
 
   SSH_FORWARD_PORT=12322
   ssh \
