@@ -7,9 +7,10 @@ main() {
     ride)
       /user-mapping.sh
 
-      CHANGE_USER="gosu ride"
       if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
         CHANGE_USER=""
+      else
+        CHANGE_USER="gosu ride"
       fi
 
       ${CHANGE_USER} open_tmux_vim.sh
