@@ -72,7 +72,7 @@ jobs:
         working-directory: /home/ride/projects
         run: |
           ls /home/ride/.ssh -al
-          /docker-entrypoint.sh ride sshme || true
+          /docker-entrypoint.sh ride sshme ${{ env.REPO }} || true
       -
         name: Build with mbuild
         run: python3 /home/ride/mbuild/utils/build.py docker
