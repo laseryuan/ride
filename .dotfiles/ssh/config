@@ -1,4 +1,4 @@
-
+ServerAliveInterval 60
 
 # Added by Krypton
 Host *
