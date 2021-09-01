@@ -1,7 +1,7 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.10.0"
+IMAGE_VERSION: "0.11.0"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
 cache-from: type=registry,ref=lasery/ride:latest
@@ -16,6 +16,7 @@ ARCH:
   variant: v6l
   platform: linux/arm/v6
   is_arm: true
+  is_arm32: true
   # enable: false
 
 - name: armv7l
@@ -26,6 +27,7 @@ ARCH:
   variant: v7l
   platform: linux/arm/v7
   is_arm: true
+  is_arm32: true
   # enable: false
 
 - name: amd64
@@ -35,4 +37,14 @@ ARCH:
   arch: amd64
   platform: linux/amd64
   is_amd: true
+  # enable: false
+
+- name: arm64
+  images:
+    base: debian:buster-slim
+  tag: arm64
+  arch: arm64
+  platform: linux/arm64
+  is_arm: true
+  is_arm64: true
   # enable: false
