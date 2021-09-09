@@ -117,7 +117,7 @@
 
         nnoremap <silent> <Leader>gd :Gdiff<CR>
         nnoremap <silent> <Leader>gb :Gblame<CR>
-        nnoremap <silent> <Leader>gs :Gstatus<CR>:resize 30<CR>
+        nnoremap <silent> <Leader>gs :Git<CR>:resize 30<CR>
     " }
 
     " Gist: vimscript for gist {
