@@ -12,8 +12,11 @@ setupenv(){
   export RESOLUTION_S=600x1165
   export RESOLUTION_L=1920x1080
    
-  [ -z "$RIDE_USER" ] || \
-    export FIREFOX_DATA=$HOST_HOME/.firefox
+  [ -z "$RIDE_USER" ] || {
+    export DISPLAY=${DISPLAY:-"unix:1"}
+    export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
+    export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
+  }
 
   [ -z "$GITHUB_ACTIONS" ] || \
     export FIREFOX_DATA=$HOST_pwd/.tmp/.firefox
