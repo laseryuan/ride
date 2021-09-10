@@ -3,8 +3,22 @@
 # docker run --rm -it \
     # --entrypoint=/bin/bash \
 
-export DOCKER_REPO_PREFIX=jess
-export MY_DOCKER_REPO_PREFIX=lasery
+#
+# Setup environment
+#
+setupenv(){
+  export DOCKER_REPO_PREFIX=jess
+  export MY_DOCKER_REPO_PREFIX=lasery
+  export RESOLUTION_S=600x1165
+  export RESOLUTION_L=1920x1080
+   
+  [ -z "$RIDE_USER" ] || \
+    export FIREFOX_DATA=$HOST_HOME/.firefox
+
+  [ -z "$GITHUB_ACTIONS" ] || \
+    export FIREFOX_DATA=$HOST_pwd/.tmp/.firefox
+}
+setupenv
 
 #
 # Helper Functions
@@ -205,7 +219,50 @@ dcos(){
     -w /root/apps \
     ${DOCKER_REPO_PREFIX}/dcos-cli "$@"
 }
+
+desktop(){
+  del_stopped desktop
+
+  docker run -d \
+    --privileged \
+    --ipc=shareable \
+    -e RESOLUTION \
+    --name desktop \
+    -p 6080:80 `# web viewer`\
+    -p 5900:5900 `# vnc viewer`\
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
+
+  # exit current shell
+  exit 0
+}
+
 firefox(){
+  del_stopped firefox
+  relies_on desktop
+
+  docker run -d \
+    --ipc=container:desktop \
+    --memory 2gb \
+    --cpuset-cpus 0 \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v "${FIREFOX_DATA}/cache:/root/.cache/mozilla" \
+    -v "${FIREFOX_DATA}/mozilla:/root/.mozilla" \
+    -v "${FIREFOX_DATA}/Downloads:/root/Downloads" \
+    -v "${FIREFOX_DATA}/Pictures:/root/Pictures" \
+    -v "${FIREFOX_DATA}/Torrents:/root/Torrents" \
+    -e DISPLAY \
+    -e GDK_SCALE \
+    -e GDK_DPI_SCALE \
+    --name firefox \
+    ${MY_DOCKER_REPO_PREFIX}/firefox "$@"
+
+  # exit current shell
+  exit 0
+}
+
+firefox_jess(){
   del_stopped firefox
 
   docker run -d \
@@ -1226,6 +1283,7 @@ ykpersonalize(){
     --name ykpersonalize \
     ${DOCKER_REPO_PREFIX}/ykpersonalize bash
 }
+
 yubico_piv_tool(){
   del_stopped yubico-piv-tool
 
