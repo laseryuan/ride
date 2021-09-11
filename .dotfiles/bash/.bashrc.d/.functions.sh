@@ -1,5 +1,14 @@
 #!/bin/bash
 
+debugger() {
+  echo "Stopped in REPL. Press ^D to resume, or ^C to abort."
+  local line
+  while read -r -p "> " line; do
+    eval "$line"
+  done
+  echo
+}
+
 # Simple calculator
 calc() {
   local result=""
