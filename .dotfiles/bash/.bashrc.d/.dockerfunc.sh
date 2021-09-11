@@ -16,10 +16,13 @@ setupenv(){
     export DISPLAY=${DISPLAY:-"unix:1"}
     export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
     export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
+    export SCRCPY_DATA=${SCRCPY_DATA:-"${HOST_HOME}"}
   }
 
-  [ -z "$GITHUB_ACTIONS" ] || \
+  [ -z "$GITHUB_ACTIONS" ] || {
     export FIREFOX_DATA=$HOST_pwd/.tmp/.firefox
+    export SCRCPY_DATA="$HOST_pwd/.tmp/.dotfiles/home"
+  }
 }
 setupenv
 
@@ -240,6 +243,19 @@ desktop(){
   exit 0
 }
 
+scrcpy(){
+  del_stopped scrcpy
+  relies_on desktop
+
+  docker run --rm -it \
+    --ipc=container:desktop \
+    -v ${SCRCPY_DATA}/.android:/root/.android \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    \
+    lasery/scrcpy \
+    sh
+}
+
 firefox(){
   del_stopped firefox
   relies_on desktop
@@ -249,13 +265,12 @@ firefox(){
     --memory 2gb \
     --cpuset-cpus 0 \
     -v /etc/localtime:/etc/localtime:ro \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v "${FIREFOX_DATA}/cache:/root/.cache/mozilla" \
     -v "${FIREFOX_DATA}/mozilla:/root/.mozilla" \
     -v "${FIREFOX_DATA}/Downloads:/root/Downloads" \
     -v "${FIREFOX_DATA}/Pictures:/root/Pictures" \
     -v "${FIREFOX_DATA}/Torrents:/root/Torrents" \
-    -e DISPLAY \
     -e GDK_SCALE \
     -e GDK_DPI_SCALE \
     --name firefox \
