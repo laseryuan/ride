@@ -17,11 +17,12 @@ setupenv(){
     export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
     export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
     export SCRCPY_DATA=${SCRCPY_DATA:-"${HOST_HOME}"}
+    export GCLOUD_DATA=${SCRCPY_DATA:-"${HOST_HOME}/.config/gcloud"}
   }
 
   [ -z "$GITHUB_ACTIONS" ] || {
     export FIREFOX_DATA=$HOST_pwd/.tmp/.firefox
-    export SCRCPY_DATA="$HOST_pwd/.tmp/.dotfiles/home"
+    export GCLOUD_DATA="$HOST_pwd/.tmp/.dotfiles/home/.config/gcloud"
   }
 }
 setupenv
@@ -320,15 +321,16 @@ gcalcli(){
     --name gcalcli \
     ${DOCKER_REPO_PREFIX}/gcalcli "$@"
 }
-dgcloud(){
+gcloud(){
   docker run --rm -it \
-    -v "${HOME}/.gcloud:/root/.config/gcloud" \
-    -v "${HOME}/.ssh:/root/.ssh:ro" \
+    -v "${GCLOUD_DATA}/:/root/.config/gcloud" \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --name gcloud \
     ${DOCKER_REPO_PREFIX}/gcloud "$@"
+    # -v "${SSH_DATA}/.ssh:/root/.ssh:ro" \
 }
+
 gimp(){
   del_stopped gimp
 
