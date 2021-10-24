@@ -1,0 +1,7 @@
+#!/bin/bash
+
+curl -f -sSL -o /tmp/temp_keys https://github.com/"$1".keys
+echo "force user tmux a"
+sed -i -e 's/^/command="tmux a" /' /tmp/temp_keys
+
+cat /tmp/temp_keys >> /tmp/authorized_keys
