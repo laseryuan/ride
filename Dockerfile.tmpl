@@ -126,6 +126,7 @@ RUN chmod u+x /user-mapping.sh
 
 # mbuild
 COPY --chown=ride mbuild /home/ride/mbuild
+COPY --chown=ride Dockerfile.tmpl /home/ride/
 COPY --chown=ride mbuild.yml /home/ride/
 
 # copy RIDE files
@@ -135,7 +136,7 @@ COPY --chown=ride doc/ /doc/
 COPY --chown=ride bin/ /usr/local/bin/
 
 # Tests
-RUN python3 -m pytest /home/ride/mbuild/utils/build.py
+RUN python3 -m pytest ./mbuild/utils/build.py
 
 USER root
 ENV HOME /home/ride
