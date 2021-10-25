@@ -12,6 +12,7 @@ class Builder:
         self.execute_current_task_only = args.only
         self.will_skip_compile_bake_file = args.skip
         self.bake_args = args.bake_args
+        self.minor = args.minor
 
         self.mbuild_dir = "/home/ride/mbuild/"
         #  self.mbuild_dir = "./mbuild/"
@@ -79,6 +80,12 @@ class Builder:
                 os.system(push_cmd)
                 push_cmd = f'docker push lasery/{repo}:{tag_new}'
                 os.system(push_cmd)
+                if self.minor:
+                    tag_minor = f'{tag_new}-{self.minor}'
+                    push_cmd = f'docker tag {repo}:{tag} lasery/{repo}:{tag_minor}'
+                    os.system(push_cmd)
+                    push_cmd = f'docker push lasery/{repo}:{tag_minor}'
+                    os.system(push_cmd)
 
     def repo_manifest(self, version):
         repo = f'lasery/{self.data["REPO"]}'
@@ -134,3 +141,17 @@ def test_create_builder(mocker):
         ],
     )
     builder = get_builder()
+
+def test_Builder_push_to_repo(mocker):
+    mocker.patch(
+        "sys.argv",
+        [
+            "builder.py",
+            "push",
+            "--only",
+            "--minor=abcde",
+        ],
+    )
+    mocker.patch('os.system')
+    builder = get_builder()
+    builder.run()

@@ -7,6 +7,7 @@ def get_arg_parser():
     parser.add_argument('--skip', action='store_true', help='skip compile the bake file')
     parser.add_argument('--only', action='store_true', help='only execute current method')
     parser.add_argument('--bake-args', default="", help='pass arguments for buildx bake')
+    parser.add_argument('--minor', default="", help='minor build version')
     return parser
 
 def test_get_arg_parser(mocker):
@@ -28,4 +29,13 @@ def test_get_arg_parser(mocker):
     args = parser.parse_args(sys_args)
     assert args.method == "deploy"
     assert args.bake_args == ""
+
+    # args for minor version
+    sys_args = shlex.split('push --only --minor="abcde"')
+
+    parser = get_arg_parser()
+
+    args = parser.parse_args(sys_args)
+    assert args.method == "push"
+    assert args.minor == "abcde"
 
