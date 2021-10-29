@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
       locales \
     `# ssh` \
       openssh-server \
+      sshfs \
     `# python` \
       python3-pip \
     `# network tools` \
@@ -29,7 +30,6 @@ RUN apt-get update && apt-get install -y \
       git-crypt \
     `# dotfiles` \
       stow \
-      sshfs \
     `# editor` \
       ack-grep \
       tmux \

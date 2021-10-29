@@ -80,7 +80,7 @@ jobs:
           || python3 /home/ride/mbuild/utils/build.py docker \
       -
         name: Push with mbuild
-        run: python3 /home/ride/mbuild/utils/build.py push --only
+        run: python3 /home/ride/mbuild/utils/build.py push --only --minor=$(echo ${GITHUB_SHA} | cut -c1-8)
       -
         name: Deply with mbuild
         run: python3 /home/ride/mbuild/utils/build.py deploy --only
