@@ -21,8 +21,7 @@ setupenv(){
   }
 
   [ -z "$GITHUB_ACTIONS" ] || {
-    export FIREFOX_DATA=$HOST_pwd/.tmp/.firefox
-    export GCLOUD_DATA="$HOST_pwd/.tmp/.dotfiles/home/.config/gcloud"
+    echo "setup environment specific for github"
   }
 }
 setupenv
