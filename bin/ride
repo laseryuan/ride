@@ -28,6 +28,13 @@ get-mount-path() {
   echo "$ret"
 }
 
+use-gitconfig-if-exists() {
+  if [[ -f "$HOME/.gitconfig" ]]; then
+    echo \
+      -v "$HOME/.gitconfig":/home/ride/.gitconfig
+  fi
+}
+
 docker-option-mount-projects() {
   if [ "$1" != "sshyou" ]; then
     echo \
@@ -55,6 +62,9 @@ create-ride() {
     `# use host ssh config or create new`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
     -v `get-folder "$HOME/.kr"`:/home/ride/.kr \
+    \
+    `# git`\
+    $(use-gitconfig-if-exists) \
     \
     `# docker in docker`\
     -e HOST_DOCKER_ID=`cut -d: -f3 < <(getent group docker)` \
