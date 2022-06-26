@@ -17,7 +17,7 @@ setupenv(){
     export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
     export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
     export SCRCPY_DATA=${SCRCPY_DATA:-"${HOST_HOME}"}
-    export GCLOUD_DATA=${SCRCPY_DATA:-"${HOST_HOME}/.config/gcloud"}
+    export GCLOUD_DATA=${GCLOUD_DATA:-"${HOST_HOME}/.config/gcloud"}
   }
 
   [ -z "$GITHUB_ACTIONS" ] || {
