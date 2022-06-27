@@ -323,8 +323,11 @@ gcalcli(){
 
 gcloud-sdk(){
   docker run --rm -it \
-    -e CLOUDSDK_CONFIG=/root/.config/gcloud \
-    -v "${GCLOUD_DATA}/:/root/.config/gcloud" \
+    -u $(id -u $USER):$(id -g $USER) \
+    -e HOME=/tmp \
+    -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
+    -v "${GCLOUD_DATA}/:/tmp/.config/gcloud" \
+    -v "${HOST_pwd}/:/tmp/data" \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --name gcloud \
