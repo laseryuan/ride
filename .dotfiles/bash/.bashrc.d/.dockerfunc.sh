@@ -320,14 +320,24 @@ gcalcli(){
     --name gcalcli \
     ${DOCKER_REPO_PREFIX}/gcalcli "$@"
 }
-gcloud(){
+
+gcloud-sdk(){
   docker run --rm -it \
+    -e CLOUDSDK_CONFIG=/root/.config/gcloud \
     -v "${GCLOUD_DATA}/:/root/.config/gcloud" \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --name gcloud \
-    ${DOCKER_REPO_PREFIX}/gcloud "$@"
+    google/cloud-sdk:alpine "$@"
     # -v "${SSH_DATA}/.ssh:/root/.ssh:ro" \
+}
+
+gsutil(){
+  gcloud-sdk gsutil "$@"
+}
+
+gcloud(){
+  gcloud-sdk gcloud "$@"
 }
 
 gimp(){
