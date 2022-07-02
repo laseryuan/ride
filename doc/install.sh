@@ -4,7 +4,7 @@
 echo "echo \"Installing $bin_name\""
 echo 'echo $PATH'
 
-echo sudo tee \""/usr/local/bin/$bin_name"\" '<<' \'EOF_RIDE\'
+echo sudo tee \""/usr/local/bin/$bin_name.sh"\" '<<' \'EOF_RIDE\'
 
 cat "/usr/local/bin/$bin_name"
 
