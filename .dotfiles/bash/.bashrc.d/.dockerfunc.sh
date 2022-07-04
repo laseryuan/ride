@@ -13,6 +13,7 @@ setupenv(){
   export RESOLUTION_L=1920x1080
    
   [ -z "$RIDE_USER" ] || {
+    export RIDE_NETWORK=${RIDE_NETWORK:-"ride_network"}
     export DISPLAY=${DISPLAY:-"unix:1"}
     export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
     export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
@@ -261,6 +262,7 @@ firefox(){
   relies_on desktop
 
   docker run -d \
+    --network="${RIDE_NETWORK}" \
     --ipc=container:desktop \
     --memory 2gb \
     --cpuset-cpus 0 \
@@ -275,9 +277,6 @@ firefox(){
     -e GDK_DPI_SCALE \
     --name firefox \
     ${MY_DOCKER_REPO_PREFIX}/firefox "$@"
-
-  # exit current shell
-  exit 0
 }
 
 firefox_jess(){
