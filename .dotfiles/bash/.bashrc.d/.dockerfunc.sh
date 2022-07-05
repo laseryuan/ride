@@ -62,6 +62,9 @@ relies_on(){
     if [[ "$state" == "false" ]] || [[ "$state" == "" ]]; then
       echo "$container is not running, starting it for you."
       $container
+      if [[ "$container" == "desktop" ]]; then
+        sleep 10
+      fi
     fi
   done
 }
