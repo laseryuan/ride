@@ -43,10 +43,35 @@ docker-option-mount-projects() {
   fi
 }
 
+
+get-ride-name() {
+  echo ride-${PWD##*/}
+}
+
+get-os() {
+  unameOut="$(uname -s)"
+  case "${unameOut}" in
+      Linux*)     machine=Linux;;
+      Darwin*)    machine=Mac;;
+      CYGWIN*)    machine=Cygwin;;
+      MINGW*)     machine=MinGw;;
+      *)          machine="UNKNOWN:${unameOut}"
+  esac
+  echo ${machine}
+}
+
+get-docker-group-id() {
+  if [ `get-os` = "Mac" ]; then
+    echo
+  else
+    echo `cut -d: -f3 < <(getent group docker)`
+  fi
+}
+
 create-ride() {
   mount_path=`get-mount-path`
 
-  docker run --rm --name=ride-${PWD##*/} -it \
+  docker run --rm --name=`get-ride-name` -it \
     `# environment virable`\
     -e TERM=$TERM \
     -e HOST_pwd=$(pwd) \
@@ -67,7 +92,7 @@ create-ride() {
     $(use-gitconfig-if-exists) \
     \
     `# docker in docker`\
-    -e HOST_DOCKER_ID=`cut -d: -f3 < <(getent group docker)` \
+    -e HOST_DOCKER_ID=`get-docker-group-id` \
     -v `get-folder "$HOME/.docker"`:/home/ride/.docker \
     -v /var/run/docker.sock:/var/run/docker.sock \
     `if ifup docker0; then echo "--add-host $(hostname):$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')"; fi` \
@@ -81,7 +106,7 @@ attach-ride() {
 }
 
 main() {
-  ride_name=ride-${PWD##*/}
+  ride_name=`get-ride-name`
 
   if [ ! "$(docker ps -q -f name=${ride_name})" ]; then
       if [ "$(docker ps -aq -f status=exited -f name=${ride_name})" ]; then
