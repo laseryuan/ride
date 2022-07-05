@@ -63,7 +63,12 @@ relies_on(){
       echo "$container is not running, starting it for you."
       $container
       if [[ "$container" == "desktop" ]]; then
-        sleep 10
+        local container_health
+        until [[ "$container_health" == '"healthy"' ]]
+        do
+          container_health=`docker inspect --format='{{json .State.Health.Status}}' desktop`
+          sleep 5
+        done
       fi
     fi
   done
