@@ -72,6 +72,7 @@ create-ride() {
   mount_path=`get-mount-path`
 
   docker run --rm --name=`get-ride-name` -it \
+    --network ride_network \
     `# environment virable`\
     -e TERM=$TERM \
     -e HOST_pwd=$(pwd) \
