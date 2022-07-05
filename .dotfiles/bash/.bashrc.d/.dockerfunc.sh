@@ -66,8 +66,9 @@ relies_on(){
         local container_health
         until [[ "$container_health" == '"healthy"' ]]
         do
-          container_health=`docker inspect --format='{{json .State.Health.Status}}' desktop`
+          echo "desktop not ready ..."
           sleep 5
+          container_health=`docker inspect --format='{{json .State.Health.Status}}' desktop`
         done
       fi
     fi
@@ -248,9 +249,6 @@ desktop(){
     -p 5900:5900 `# vnc viewer`\
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
-
-  # exit current shell
-  exit 0
 }
 
 scrcpy(){
