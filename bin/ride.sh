@@ -105,7 +105,14 @@ attach-ride() {
   docker attach ride-${PWD##*/}
 }
 
+ceate-ride-network-ifnotexist() {
+  docker network inspect ride_network >/dev/null 2>&1 || \
+      docker network create ride_network
+}
+
 main() {
+  ceate-ride-network-ifnotexist
+
   ride_name=`get-ride-name`
 
   if [ ! "$(docker ps -q -f name=${ride_name})" ]; then

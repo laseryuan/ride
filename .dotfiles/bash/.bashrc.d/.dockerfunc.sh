@@ -231,6 +231,7 @@ desktop(){
   del_stopped desktop
 
   docker run -d \
+    --network="${RIDE_NETWORK}" \
     --privileged \
     --ipc=shareable \
     -e RESOLUTION \
