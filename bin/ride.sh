@@ -104,7 +104,7 @@ create-ride() {
 }
 
 attach-ride() {
-  docker attach ride-${PWD##*/}
+  docker exec -u ride -it ride-${PWD##*/} tmux a
 }
 
 ceate-ride-network-ifnotexist() {
