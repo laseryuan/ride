@@ -27,6 +27,12 @@ setupenv(){
 }
 setupenv
 
+use-sound-device-if-exists() {
+  if [[ -f "/dev/snd" ]]; then
+    relies_on pulseaudio
+  fi
+}
+
 #
 # Helper Functions
 #
@@ -268,6 +274,8 @@ firefox(){
   del_stopped firefox
   relies_on desktop
 
+  use-sound-device-if-exists
+
   docker run -d \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
@@ -277,6 +285,7 @@ firefox(){
     --cpuset-cpus 0 \
     -v /etc/localtime:/etc/localtime:ro \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e PULSE_SERVER=pulseaudio \
     -v "${FIREFOX_DATA}/cache:/tmp/.cache/mozilla" \
     -v "${FIREFOX_DATA}/mozilla:/tmp/.mozilla" \
     -v "${FIREFOX_DATA}/Downloads:/tmp/Downloads" \
@@ -815,6 +824,10 @@ pulseaudio(){
   del_stopped pulseaudio
 
   docker run -d \
+    --network="${RIDE_NETWORK}" \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+    -e HOME=/tmp \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -p 4713:4713 \
     --restart unless-stopped \
     -v /etc/localtime:/etc/localtime:ro \
