@@ -270,16 +270,18 @@ firefox(){
 
   docker run -d \
     --network="${RIDE_NETWORK}" \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+    -e HOME=/tmp \
     --ipc=container:desktop \
     --memory 2gb \
     --cpuset-cpus 0 \
     -v /etc/localtime:/etc/localtime:ro \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v "${FIREFOX_DATA}/cache:/root/.cache/mozilla" \
-    -v "${FIREFOX_DATA}/mozilla:/root/.mozilla" \
-    -v "${FIREFOX_DATA}/Downloads:/root/Downloads" \
-    -v "${FIREFOX_DATA}/Pictures:/root/Pictures" \
-    -v "${FIREFOX_DATA}/Torrents:/root/Torrents" \
+    -v "${FIREFOX_DATA}/cache:/tmp/.cache/mozilla" \
+    -v "${FIREFOX_DATA}/mozilla:/tmp/.mozilla" \
+    -v "${FIREFOX_DATA}/Downloads:/tmp/Downloads" \
+    -v "${FIREFOX_DATA}/Pictures:/tmp/Pictures" \
+    -v "${FIREFOX_DATA}/Torrents:/tmp/Torrents" \
     -e GDK_SCALE \
     -e GDK_DPI_SCALE \
     --name firefox \
