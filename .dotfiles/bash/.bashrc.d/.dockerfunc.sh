@@ -27,6 +27,13 @@ setupenv(){
 }
 setupenv
 
+get_host_pwd() {
+  local folder_name=${HOST_pwd##*/}
+  local ride_path=/home/ride/projects/${folder_name}
+  local rel_path=`realpath --relative-to=${ride_path} ${PWD}`
+  echo ${HOST_pwd}/${rel_path}
+}
+
 use-sound-device-if-exists() {
   if [[ -f "/dev/snd" ]]; then
     relies_on pulseaudio
@@ -643,6 +650,18 @@ nmap(){
     --net host \
     ${DOCKER_REPO_PREFIX}/nmap "$@"
 }
+
+node(){
+  docker run --rm -it \
+    --network="${RIDE_NETWORK}" \
+    -u $(id -u $USER):$(id -g $USER) \
+    -e HOME=/tmp \
+    --workdir=/tmp/data \
+    -v `get_host_pwd`:/tmp/data \
+    --name node \
+    node:slim node "$@"
+}
+
 notify_osd(){
   del_stopped notify_osd
 

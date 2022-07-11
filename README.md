@@ -1,8 +1,8 @@
 # Usage
 start & install
 ```
-docker run --rm lasery/ride
-docker run --rm lasery/ride install | sh
+docker run lasery/ride
+docker run lasery/ride install | sh
 ```
 
 custom usage
