@@ -286,18 +286,14 @@ firefox(){
   docker run -d \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
-    -e HOME=/tmp \
+    -e HOME=/home \
     --ipc=container:desktop \
     --memory 2gb \
     --cpuset-cpus 0 \
     -v /etc/localtime:/etc/localtime:ro \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e PULSE_SERVER=pulseaudio \
-    -v "${FIREFOX_DATA}/cache:/tmp/.cache/mozilla" \
-    -v "${FIREFOX_DATA}/mozilla:/tmp/.mozilla" \
-    -v "${FIREFOX_DATA}/Downloads:/tmp/Downloads" \
-    -v "${FIREFOX_DATA}/Pictures:/tmp/Pictures" \
-    -v "${FIREFOX_DATA}/Torrents:/tmp/Torrents" \
+    -v "${FIREFOX_DATA}:/home" \
     -e GDK_SCALE \
     -e GDK_DPI_SCALE \
     --name firefox \
@@ -650,7 +646,6 @@ nmap(){
     --net host \
     ${DOCKER_REPO_PREFIX}/nmap "$@"
 }
-
 node(){
   docker run --rm -it \
     --network="${RIDE_NETWORK}" \
@@ -661,7 +656,6 @@ node(){
     --name node \
     node:slim node "$@"
 }
-
 notify_osd(){
   del_stopped notify_osd
 
