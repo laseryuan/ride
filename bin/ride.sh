@@ -1,5 +1,4 @@
-#/bin/bash
-# Dependency: ip command
+#!/bin/bash
 
 ifup() {
   echo 'Returns true if iface exists and is up, otherwise false.' >&2
@@ -43,7 +42,6 @@ docker-option-mount-projects() {
   fi
 }
 
-
 get-ride-name() {
   echo ride-${PWD##*/}
 }
@@ -64,7 +62,15 @@ get-docker-group-id() {
   if [ `get-os` = "Mac" ]; then
     echo
   else
-    echo `cut -d: -f3 < <(getent group docker)`
+    echo `sed -nr "s/^docker:.*:([0-9]+):.*/\1/p" /etc/group`
+  fi
+}
+
+add-host-ip() {
+  if  ( ifconfig docker0 | head -1 | grep UP ) > /dev/null 2>& 1
+  then
+    local address=`ifconfig docker0 | grep 'inet' | cut -d: -f2 | awk '{print $2}'`
+    echo "--add-host $(hostname):${address}"
   fi
 }
 
@@ -78,7 +84,7 @@ create-ride() {
     -e TERM \
     -e HOST_pwd=$(pwd) \
     -e HOST_HOME=$HOME \
-    -e HOST_NAME=$(hostname) \
+    -e HOST_NAME=$(hostname | cut -c -10) \
     \
     `# mount data`\
     $(docker-option-mount-projects "$@") \
@@ -97,7 +103,7 @@ create-ride() {
     -e HOST_DOCKER_ID=`get-docker-group-id` \
     -v `get-folder "$HOME/.docker"`:/home/ride/.docker \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    `if ifup docker0; then echo "--add-host $(hostname):$(ip -4 addr show docker0 | grep -Po 'inet \K[\d.]+')"; fi` \
+    $(add-host-ip) \
     \
     lasery/ride \
     ride "$@"
