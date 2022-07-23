@@ -92,7 +92,7 @@ create-ride() {
     `# as host user`\
     -e HOST_USER_NAME=$(id -u -n) -e HOST_USER_ID=$(id -u) -e HOST_USER_GID=$(id -g) \
     \
-    `# use host ssh config or create new`\
+    `# persist ssh config on host`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
     -v `get-folder "$HOME/.kr"`:/home/ride/.kr \
     \

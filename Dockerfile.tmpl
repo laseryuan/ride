@@ -103,8 +103,6 @@ RUN git config --global user.email "{{GIT_EMAIL}}" && \
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
 RUN mkdir projects && \
-    mkdir .ssh && \
-    cp .dotfiles/ssh/config .ssh/ && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ vim tmux bash && \
@@ -114,11 +112,6 @@ RUN set -ex; \
     git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
     vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall; \
     chmod a+w -R /home/ride
-
-# Give ssh proper permission
-RUN chmod 700 .ssh && \
-    chmod 600 .ssh/config && \
-    ``
 
 # user-mapping.sh
 COPY --chown=ride mapuser/user-mapping.sh /
