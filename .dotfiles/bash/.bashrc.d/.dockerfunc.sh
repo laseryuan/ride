@@ -17,6 +17,7 @@ setupenv(){
     export DISPLAY=${DISPLAY:-"unix:1"}
     export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
     export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
+    export CHROME_DATA=${CHROME_DATA:-"${HOST_HOME}/.chrome"}
     export SCRCPY_DATA=${SCRCPY_DATA:-"${HOST_HOME}"}
     export GCLOUD_DATA=${GCLOUD_DATA:-"${HOST_HOME}/.config/gcloud"}
   }
@@ -186,29 +187,23 @@ chrome(){
     # --privileged -v /dev:/dev `# U2F support` \
     # -v "${HOME}/Downloads:/home/chrome/Downloads" \
   docker run -d \
-    -v "${HOME}/Documents/.chrome:/data" \
-    -v "${HOME}/Documents/.chrome/Share:/home/chrome/Downloads" \
-    -v /usr/share/fonts:/usr/share/fonts:ro \
+    --security-opt seccomp:${HOME}/.dotfiles/chrome.json \
+    --network="${RIDE_NETWORK}" \
     --memory 3gb \
-    -v /etc/localtime:/etc/localtime:ro \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -e "DISPLAY=unix${DISPLAY}" \
-    -v /etc/hosts:/etc/hosts \
-    --security-opt seccomp:/etc/docker/seccomp/chrome.json \
-    -v /dev/shm:/dev/shm \
-    --device /dev/snd \
-    --device /dev/dri \
-    --device /dev/video0 \
-    --device /dev/usb \
-    --device /dev/bus/usb \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     --group-add audio \
     --group-add video \
-    --group-add plugdev \
+    -e HOME=/home \
+    -v "${CHROME_DATA}:/home" \
+    --ipc=container:desktop \
+    -v /dev/shm:/dev/shm \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
-    ${MY_DOCKER_REPO_PREFIX}/chrome --user-data-dir=/data \
+    jess/chrome \
     --proxy-server="$proxy" \
     --host-resolver-rules="$map" "$args"
-
 }
 consul(){
   del_stopped consul
