@@ -102,7 +102,7 @@ RUN git config --global user.email "{{GIT_EMAIL}}" && \
 
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
-RUN mkdir projects && \
+RUN mkdir projects .ssh .kr && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ vim tmux bash && \
