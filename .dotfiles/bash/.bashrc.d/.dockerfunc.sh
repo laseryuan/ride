@@ -252,6 +252,7 @@ desktop(){
     --privileged \
     --ipc=shareable \
     -e RESOLUTION \
+    -e VNC_PASSWORD \
     --name desktop \
     -p 6080:80 `# web viewer`\
     -p 5900:5900 `# vnc viewer`\
