@@ -70,8 +70,12 @@ add-host-ip() {
   if  ( ifconfig docker0 | head -1 | grep UP ) > /dev/null 2>& 1
   then
     local address=`ifconfig docker0 | grep 'inet' | cut -d: -f2 | awk '{print $2}'`
-    echo "--add-host $(hostname):${address}"
+    echo "--add-host $(get-host-name):${address}"
   fi
+}
+
+get-host-name() {
+  hostname | cut -c -10
 }
 
 create-ride() {
@@ -84,7 +88,7 @@ create-ride() {
     -e TERM \
     -e HOST_pwd=$(pwd) \
     -e HOST_HOME=$HOME \
-    -e HOST_NAME=$(hostname | cut -c -10) \
+    -e HOST_NAME=`get-host-name` \
     \
     `# mount data`\
     $(docker-option-mount-projects "$@") \
