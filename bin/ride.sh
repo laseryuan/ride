@@ -34,6 +34,12 @@ use-gitconfig-if-exists() {
   fi
 }
 
+user-docker-option-if-exists() {
+  [ -z "$DOCKER_OPTION" ] || {
+    echo "$DOCKER_OPTION"
+  }
+}
+
 docker-option-mount-projects() {
   if [ "$1" != "sshyou" ]; then
     echo \
@@ -102,6 +108,9 @@ create-ride() {
     \
     `# git`\
     $(use-gitconfig-if-exists) \
+    \
+    `# additonal docker options`\
+    $(user-docker-option-if-exists) \
     \
     `# docker in docker`\
     -e HOST_DOCKER_ID=`get-docker-group-id` \
