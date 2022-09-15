@@ -40,6 +40,12 @@ user-docker-option-if-exists() {
   }
 }
 
+debug-mode() {
+  [ -z "$DEBUG" ] || {
+    echo "echo"
+  }
+}
+
 docker-option-mount-projects() {
   if [ "$1" != "sshyou" ]; then
     echo \
@@ -87,7 +93,9 @@ get-host-name() {
 create-ride() {
   mount_path=`get-mount-path`
 
-  docker run --rm --name=`get-ride-name` -it \
+  $(debug-mode) docker run \
+    -it --rm \
+    --name=`get-ride-name` \
     --network ride_network \
     `# environment virable`\
     -e DISPLAY \
