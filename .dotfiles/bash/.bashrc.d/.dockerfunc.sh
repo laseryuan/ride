@@ -15,7 +15,7 @@ setupenv(){
   [ -z "$RIDE_USER" ] || {
     export RIDE_NETWORK=${RIDE_NETWORK:-"ride_network"}
     export DISPLAY=${DISPLAY:-"unix:1"}
-    export RESOLUTION=${RESOLUTION:-"${RESOLUTION_L}"}
+    export RESOLUTION=${RESOLUTION:-"1280x720"}
     export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
     export CHROME_DATA=${CHROME_DATA:-"${HOST_HOME}/.chrome"}
     export SCRCPY_DATA=${SCRCPY_DATA:-"${HOST_HOME}"}
