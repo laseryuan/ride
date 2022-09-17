@@ -22,12 +22,13 @@ if [[ "$mount_flag" == "mount" ]]; then
 
   SSH_FORWARD_PORT=12322
   ssh \
+    -R ${SSH_FORWARD_PORT}:localhost:22 \
     -o StrictHostKeyChecking=no \
     -J sish.unsown.top:2222 \
-    -R ${SSH_FORWARD_PORT}:localhost:22 \
     ${USER}@${SSHME_SERVER}
 else
   ssh \
+    -L :5900:desktop:5900 \
     -o StrictHostKeyChecking=no \
     -J sish.unsown.top:2222 \
     ${USER}@${SSHME_SERVER}
