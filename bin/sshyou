@@ -28,7 +28,7 @@ if [[ "$mount_flag" == "mount" ]]; then
     ${USER}@${SSHME_SERVER}
 else
   ssh \
-    -L :5900:desktop:5900 \
+    -L 0.0.0.0:5900:desktop:5900 \
     -o StrictHostKeyChecking=no \
     -J sish.unsown.top:2222 \
     ${USER}@${SSHME_SERVER}
