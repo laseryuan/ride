@@ -1,7 +1,7 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.12.18"
+IMAGE_VERSION: "0.12.19"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
 cache-from: type=registry,ref=lasery/ride:latest
@@ -32,7 +32,7 @@ ARCH:
 
 - name: amd64
   images:
-    base: debian:stable-slim
+    base: debian:stable
   tag: amd64
   arch: amd64
   platform: linux/amd64
@@ -41,7 +41,7 @@ ARCH:
 
 - name: arm64
   images:
-    base: debian:stable-slim
+    base: debian:stable
   tag: arm64
   arch: arm64
   platform: linux/arm64
