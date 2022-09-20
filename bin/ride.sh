@@ -144,15 +144,22 @@ main() {
 
   ride_name=`get-ride-name`
 
-  if [ ! "$(docker ps -q -f name=${ride_name})" ]; then
-      if [ "$(docker ps -aq -f status=exited -f name=${ride_name})" ]; then
-          echo "cleanup stopped container"
-          docker rm ${ride_name}
-      fi
-      create-ride "$@"
-  else
-    attach-ride
+  if [ "$(docker ps -q -f name=${ride_name})" ]; then
+    local load
+    read -p "Load existing ride? (y/n)" load
+    if [ "$load" == "yes" ]; then
+      attach-ride
+      return
+    else
+      docker rm -f ${ride_name}
+    fi
   fi
+
+  if [ "$(docker ps -aq -f status=exited -f name=${ride_name})" ]; then
+      echo "cleanup stopped container"
+      docker rm ${ride_name}
+  fi
+  create-ride "$@"
 }
 
 main "$@"
