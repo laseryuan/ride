@@ -29,10 +29,16 @@ setupenv(){
 }
 setupenv
 
-get_host_pwd() {
-  local folder_name=${HOST_pwd##*/}
-  local ride_path=/home/ride/projects/${folder_name}
-  local rel_path=`realpath --relative-to=${ride_path} ${PWD}`
+get_host_pwd () {
+  local folder_name=${HOST_pwd##*/};
+  local ride_path
+  if [[ "$folder_name" == "projects" ]]; then
+    ride_path=/home/ride/projects;
+  else
+    ride_path=/home/ride/projects/${folder_name};
+  fi
+
+  local rel_path=`realpath --relative-to=${ride_path} ${PWD}`;
   echo ${HOST_pwd}/${rel_path}
 }
 
