@@ -173,7 +173,9 @@ cheese(){
     --name cheese \
     ${DOCKER_REPO_PREFIX}/cheese
 }
+
 chrome(){
+  relies_on desktop
   # add flags for proxy if passed
   local proxy=
   local map
@@ -194,7 +196,7 @@ chrome(){
     # --privileged -v /dev:/dev `# U2F support` \
     # -v "${HOME}/Downloads:/home/chrome/Downloads" \
   docker run -d \
-    --security-opt seccomp:${HOME}/.dotfiles/chrome.json \
+    --security-opt seccomp:unconfined \
     --network="${RIDE_NETWORK}" \
     --memory 3gb \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
