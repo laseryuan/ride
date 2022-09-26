@@ -364,7 +364,7 @@ gcloud-sdk(){
     -e HOME=/tmp \
     -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
     -v "${GCLOUD_DATA}:/tmp/.config/gcloud" \
-    -v "${GSUTIL_DATA}:/tmp/data" \
+    -v `get_host_pwd`:/tmp/data \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --name gcloud \
