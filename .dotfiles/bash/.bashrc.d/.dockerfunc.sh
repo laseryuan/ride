@@ -29,6 +29,18 @@ setupenv(){
 }
 setupenv
 
+loadenv () {
+  if [[ -f ".env.ride" ]]; then
+    # Show env vars
+    grep -v '^#' .env.ride
+
+    # Export env vars
+    set -o allexport
+    source .env.ride
+    set +o allexport
+  fi
+}
+
 get_host_pwd () {
   local folder_name=${HOST_pwd##*/};
   local ride_path
