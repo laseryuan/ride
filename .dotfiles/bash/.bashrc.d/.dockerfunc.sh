@@ -7,6 +7,7 @@
 # Setup environment
 #
 setupenv(){
+  export RIDE_CONFIG=$HOST_HOME/.ride
   export DOCKER_REPO_PREFIX=jess
   export MY_DOCKER_REPO_PREFIX=lasery
   export RESOLUTION_S=600x1165
@@ -16,11 +17,6 @@ setupenv(){
     export RIDE_NETWORK=${RIDE_NETWORK:-"ride_network"}
     export DISPLAY=${DISPLAY:-"unix:1"}
     export RESOLUTION=${RESOLUTION:-"1280x720"}
-    export FIREFOX_DATA=${FIREFOX_DATA:-"${HOST_HOME}/.firefox"}
-    export CHROME_DATA=${CHROME_DATA:-"${HOST_HOME}/.chrome"}
-    export SCRCPY_DATA=${SCRCPY_DATA:-"${HOST_HOME}"}
-    export GCLOUD_DATA=${GCLOUD_DATA:-"${HOST_HOME}/.config/gcloud"}
-    export GSUTIL_DATA=${GSUTIL_DATA:-"${HOST_HOME}"}
   }
 
   [ -z "$GITHUB_ACTIONS" ] || {
@@ -187,6 +183,7 @@ cheese(){
 }
 
 chrome(){
+  CHROME_DATA=${CHROME_DATA:-"${RIDE_CONFIG}/chrome"}
   relies_on desktop
   # add flags for proxy if passed
   local proxy=
@@ -222,7 +219,7 @@ chrome(){
     -v /etc/localtime:/etc/localtime:ro \
     -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
-    jess/chrome \
+    $DOCKER_REPO_PREFIX/chrome \
     --proxy-server="$proxy" \
     --host-resolver-rules="$map" "$args"
 }
@@ -282,12 +279,13 @@ desktop(){
 }
 
 scrcpy(){
+  SCRCPY_DATA=${SCRCPY_DATA:-"${RIDE_CONFIG}/android"}
   del_stopped scrcpy
   relies_on desktop
 
   docker run --rm -it \
     --ipc=container:desktop \
-    -v ${SCRCPY_DATA}/.android:/root/.android \
+    -v ${SCRCPY_DATA}:/root/.android \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     \
     lasery/scrcpy \
@@ -295,6 +293,7 @@ scrcpy(){
 }
 
 firefox(){
+  FIREFOX_DATA=${FIREFOX_DATA:-"${RIDE_CONFIG}/firefox"}
   del_stopped firefox
   relies_on desktop
 
@@ -359,6 +358,7 @@ gcalcli(){
 }
 
 gcloud-sdk(){
+  GCLOUD_DATA=${GCLOUD_DATA:-"${RIDE_CONFIG}/gcloud"}
   docker run --rm -it \
     -u $(id -u $USER):$(id -g $USER) \
     -e HOME=/tmp \
