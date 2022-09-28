@@ -16,7 +16,6 @@ setupenv(){
   [ -z "$RIDE_USER" ] || {
     export RIDE_NETWORK=${RIDE_NETWORK:-"ride_network"}
     export DISPLAY=${DISPLAY:-"unix:1"}
-    export RESOLUTION=${RESOLUTION:-"1280x720"}
   }
 
   [ -z "$GITHUB_ACTIONS" ] || {
@@ -263,6 +262,8 @@ dcos(){
 }
 
 desktop(){
+  VNC_PORT=${VNC_PORT:-"5900"}
+  RESOLUTION=${RESOLUTION:-"1280x720"}
   del_stopped desktop
 
   docker run -d \
@@ -272,8 +273,7 @@ desktop(){
     -e RESOLUTION \
     -e VNC_PASSWORD \
     --name desktop \
-    -p 6080:80 `# web viewer`\
-    -p 5900:5900 `# vnc viewer`\
+    -p ${VNC_PORT}:5900 `# vnc viewer`\
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
