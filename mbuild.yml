@@ -1,7 +1,7 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.13.1"
+IMAGE_VERSION: "0.13.2"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
 cache-from: type=registry,ref=lasery/ride:latest

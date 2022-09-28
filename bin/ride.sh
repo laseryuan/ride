@@ -130,8 +130,12 @@ create-ride() {
     ride "$@"
 }
 
-attach-ride() {
+ride-load() {
   docker exec -u ride -it ride-${PWD##*/} tmux a
+}
+
+ride-attach() {
+  docker attach ride-${PWD##*/}
 }
 
 ceate-ride-network-ifnotexist() {
@@ -145,10 +149,13 @@ main() {
   ride_name=`get-ride-name`
 
   if [ "$(docker ps -q -f name=${ride_name})" ]; then
-    local load
-    read -p "Load existing ride? (y/n)" load
-    if [ "$load" == "yes" ]; then
-      attach-ride
+    local choice
+    read -p "Load existing ride? (y/n)" choice
+    if [ "$choice" == "load" ]; then
+      ride-load
+      return
+    elif [ "$choice" == "attach" ]; then
+      ride-attach
       return
     else
       docker rm -f ${ride_name}
