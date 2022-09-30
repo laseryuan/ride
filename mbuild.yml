@@ -1,11 +1,9 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.13.7"
+IMAGE_VERSION: "0.13.8"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
-cache-from: type=registry,ref=lasery/ride:latest
-cache-to: type=inline
 
 ARCH:
 - name: armv6l
