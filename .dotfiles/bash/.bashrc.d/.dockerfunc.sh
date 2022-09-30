@@ -104,6 +104,21 @@ relies_on(){
 }
 
 #
+# Container Options
+#
+docker_mount_os(){
+  echo \
+    --network="${RIDE_NETWORK}" \
+    --ipc=container:desktop \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+    -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    -v `get_host_pwd`:/home/data -e HOME=/home/data --workdir=/home/data \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e PULSE_SERVER=pulseaudio \
+    -e GDK_SCALE -e GDK_DPI_SCALE -v /etc/localtime:/etc/localtime:ro
+}
+
+#
 # Container Aliases
 #
 
@@ -270,6 +285,18 @@ dcos(){
     -v "$(pwd):/root/apps" \
     -w /root/apps \
     ${DOCKER_REPO_PREFIX}/dcos-cli "$@"
+}
+
+debian(){
+  del_stopped debian
+  relies_on desktop
+  use-sound-device-if-exists
+
+  docker run \
+    -it \
+    `docker_mount_os` \
+    --name debian \
+    debian "$@"
 }
 
 desktop(){
@@ -1221,6 +1248,19 @@ travis(){
     --log-driver none \
     ${DOCKER_REPO_PREFIX}/travis "$@"
 }
+
+ubuntu(){
+  del_stopped ubuntu
+  relies_on desktop
+  use-sound-device-if-exists
+
+  docker run \
+    -it \
+    `docker_mount_os` \
+    --name ubuntu \
+    ubuntu "$@"
+}
+
 virsh(){
   relies_on kvm
 
