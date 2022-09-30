@@ -270,8 +270,8 @@ desktop(){
     --network="${RIDE_NETWORK}" \
     --privileged \
     --ipc=shareable \
-    -e RESOLUTION \
-    -e VNC_PASSWORD \
+    -e RESOLUTION="${RESOLUTION}" \
+    -e VNC_PASSWORD="${VNC_PASSWORD}" \
     --name desktop \
     -p ${VNC_PORT}:5900 `# vnc viewer`\
     -v /tmp/.X11-unix:/tmp/.X11-unix \
