@@ -66,7 +66,7 @@ class Builder:
         ret = os.system(
           "docker buildx bake -f " + self.output_dir + "docker-bake.hcl " + self.bake_args
           )
-        if ret is not 0:
+        if ret != 0:
             sys.exit(1)
 
     def push_to_repo(self):
