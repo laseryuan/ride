@@ -287,18 +287,6 @@ dcos(){
     ${DOCKER_REPO_PREFIX}/dcos-cli "$@"
 }
 
-debian(){
-  del_stopped debian
-  relies_on desktop
-  use-sound-device-if-exists
-
-  docker run \
-    -it \
-    `docker_mount_os` \
-    --name debian \
-    debian "$@"
-}
-
 desktop(){
   VNC_PORT=${VNC_PORT:-"5900"}
   RESOLUTION=${RESOLUTION:-"1280x720"}
@@ -1249,16 +1237,16 @@ travis(){
     ${DOCKER_REPO_PREFIX}/travis "$@"
 }
 
-ubuntu(){
-  del_stopped ubuntu
+run_image(){
+  del_stopped run_image 
   relies_on desktop
   use-sound-device-if-exists
 
   docker run \
     -it \
     `docker_mount_os` \
-    --name ubuntu \
-    ubuntu "$@"
+    --name run_image \
+    "$1"
 }
 
 virsh(){
