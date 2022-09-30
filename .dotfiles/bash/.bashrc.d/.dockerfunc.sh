@@ -110,6 +110,17 @@ relies_on(){
 alias yt='docker run --rm -u $(id -u):$(id -g) -v $PWD:/data vimagick/youtube-dl'
 # alias mustache='docker run -v `pwd`:/data --rm coolersport/mustache'
 
+adobe(){
+  del_stopped adobe
+  docker run  \
+    -v `get_host_pwd`:/home/acroread/Documents:rw \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e uid=${HOST_USER_ID} \
+    -e gid=${HOST_USER_GID} \
+    --name adobe \
+    chrisdaish/acroread
+}
+
 apt_file(){
   docker run --rm -it \
     --name apt-file \
