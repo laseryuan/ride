@@ -224,15 +224,9 @@ chrome(){
 
   del_stopped chrome
 
-  # one day remove /etc/hosts bind mount when effing
-  # overlay support inotify, such bullshit
-  # :
-    # --privileged -v /dev:/dev `# U2F support` \
-    # -v "${HOME}/Downloads:/home/chrome/Downloads" \
   docker run -d \
     --security-opt seccomp:unconfined \
     --network="${RIDE_NETWORK}" \
-    --memory 3gb \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     --group-add audio \
     --group-add video \
@@ -1326,6 +1320,33 @@ watchman(){
     --name watchman \
     ${DOCKER_REPO_PREFIX}/watchman --foreground
 }
+
+wechat(){
+  WECHAT_DATA=${WECHAT_DATA:-"${RIDE_CONFIG}/wechat"}
+  del_stopped wechat
+  relies_on desktop
+
+  use-sound-device-if-exists
+
+  docker run -d \
+    -e WINEARCH=win64 \
+    -e WINEPREFIX=/home/data \
+    -v "${WECHAT_DATA}":/home/data \
+    -e HOME=/home/data --workdir=/home/data \
+    --network="${RIDE_NETWORK}" \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+    --ipc=container:desktop \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --name wechat \
+    ${MY_DOCKER_REPO_PREFIX}/wine $(
+      [ -z "$1" ] && {
+        echo bash run.sh
+      } || echo "$@"
+    )
+}
+
 weematrix(){
   del_stopped weematrix
 
@@ -1366,6 +1387,36 @@ wg(){
     --name wg \
     ${DOCKER_REPO_PREFIX}/wg "$@"
 }
+
+wine(){
+  WINE_DATA=${WINE_DATA:-"${RIDE_CONFIG}/wine"}
+  del_stopped wine
+  relies_on desktop
+
+  use-sound-device-if-exists
+
+  docker run -d \
+    -e WINEARCH=win64 \
+    -e WINEPREFIX=/home/data \
+    -e LC_ALL=zh_CN.UTF-8 \
+    -e LANG=zh_CN.UTF-8 \
+    -e LANGUAGE=en_US.UTF-8 \
+    -v "${WINE_DATA}":/home/data \
+    -e HOME=/home/data --workdir=/home/data \
+    --network="${RIDE_NETWORK}" \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+    --ipc=container:desktop \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    --name wine \
+    ${MY_DOCKER_REPO_PREFIX}/wine $(
+      [ -z "$1" ] && {
+        echo tail -f
+      } || echo "$@"
+    )
+}
+
 wireshark(){
   del_stopped wireshark
 
