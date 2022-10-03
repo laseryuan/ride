@@ -19,6 +19,11 @@ if [ -z "${HOST_USER_ID}" -a -z "${HOST_USER_GID}" ]; then
     echo "Nothing to do here." ; exit 0
 fi
 
+# if host user id is the same as ride  we do not need to do anything
+if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000} ]]; then
+    echo "Nothing to do here." ; exit 0
+fi
+
 if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
   echo "Changing root home directory ..."
   sed -i -e '/root/s!\(.*:\).*:\(.*\)!\1/home/ride:\2!' /etc/passwd
