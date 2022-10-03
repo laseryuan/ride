@@ -110,6 +110,7 @@ docker_mount_os(){
   echo \
     --network="${RIDE_NETWORK}" \
     --ipc=container:desktop \
+    -v /dev/shm:/dev/shm \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
     -v `get_host_pwd`:/home/data -e HOME=/home/data --workdir=/home/data \
@@ -383,13 +384,10 @@ gcloud-sdk(){
     -u $(id -u $USER):$(id -g $USER) \
     -e HOME=/tmp \
     -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
-    -v "${GCLOUD_DATA}:/tmp/.config/gcloud" \
+    -v "${GCLOUD_DATA}":/tmp/.config/gcloud \
     -v `get_host_pwd`:/tmp/data \
-    -v "$(command -v docker):/usr/bin/docker" \
-    -v /var/run/docker.sock:/var/run/docker.sock \
     --name gcloud \
     google/cloud-sdk:alpine "$@"
-    # -v "${SSH_DATA}/.ssh:/root/.ssh:ro" \
 }
 
 gsutil(){

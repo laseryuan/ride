@@ -8,11 +8,13 @@ ifup() {
 }
 
 get-folder() {
-  echo 'Returns directory real path; Create the directory if it was not there.' >&2
 
   ret="$1"
   [ -L "$ret" ] && ret=`realpath "$ret"`
-  [ -d "$ret" ] || mkdir "$ret"
+  [ -d "$ret" ] || {
+    echo "Creating directory: $ret" >&2
+    mkdir "$ret"
+  }
   echo $ret
 }
 

@@ -5,6 +5,7 @@ set -e
 main() {
   case "$1" in
     ride)
+      enable-docker.sh
       user-mapping.sh
 
       if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then

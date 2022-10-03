@@ -7,13 +7,6 @@ if [ -z "${RIDE_USER}" ]; then
   echo "We need RIDE_USER to be set!"; exit 100
 fi
 
-# if specify host docker group id we add user to this group
-if [ -n "${HOST_DOCKER_ID}" ]; then
-    echo "Adding user to host docker group id" ;
-    groupadd --force --gid $HOST_DOCKER_ID docker
-    usermod -a -G docker ride
-fi
-
 # if both not set we do not need to do anything
 if [ -z "${HOST_USER_ID}" -a -z "${HOST_USER_GID}" ]; then
     echo "Nothing to do here." ; exit 0
