@@ -25,13 +25,13 @@ setupenv(){
 setupenv
 
 loadenv () {
-  if [[ -f ".env.ride" ]]; then
+  if [[ -f ".env.sh" ]]; then
     # Show env vars
-    grep -v '^#' .env.ride
+    grep -v '^#' .env.sh
 
     # Export env vars
     set -o allexport
-    source .env.ride
+    source .env.sh
     set +o allexport
   fi
 }
