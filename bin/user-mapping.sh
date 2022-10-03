@@ -7,9 +7,9 @@ if [ -z "${RIDE_USER}" ]; then
   echo "We need RIDE_USER to be set!"; exit 100
 fi
 
-# if host has docker group we add user to this group
+# if specify host docker group id we add user to this group
 if [ -n "${HOST_DOCKER_ID}" ]; then
-    echo "Adding user to host docker group" ;
+    echo "Adding user to host docker group id" ;
     groupadd --force --gid $HOST_DOCKER_ID docker
     usermod -a -G docker ride
 fi
@@ -21,7 +21,7 @@ fi
 
 # if host user id is the same as ride  we do not need to do anything
 if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000} ]]; then
-    echo "Nothing to do here." ; exit 0
+    echo "Ride has the Same user id as host." ; exit 0
 fi
 
 if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
@@ -29,8 +29,7 @@ if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
   sed -i -e '/root/s!\(.*:\).*:\(.*\)!\1/home/ride:\2!' /etc/passwd
   chown -R root:root /home/ride/.ssh
 else
-  # reset user_?id to either new id or if empty old (still one of above
-  # might not be set)
+  echo "Remapping user and home directory ..."
   RIDE_USER_ID=${HOST_USER_ID:=$RIDE_USER_ID}
   RIDE_USER_GID=${HOST_USER_GID:=$RIDE_USER_GID}
 

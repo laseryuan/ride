@@ -115,10 +115,6 @@ RUN set -ex; \
     vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall; \
     chmod a+w -R /home/ride
 
-# user-mapping.sh
-COPY --chown=ride mapuser/user-mapping.sh /
-RUN chmod u+x /user-mapping.sh
-
 # mbuild
 COPY --chown=ride mbuild /home/ride/mbuild
 COPY --chown=ride Dockerfile.tmpl /home/ride/
