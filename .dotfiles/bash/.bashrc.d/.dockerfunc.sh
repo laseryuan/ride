@@ -379,6 +379,8 @@ gcalcli(){
 }
 
 gcloud-sdk(){
+  del_stopped gcloud
+
   GCLOUD_DATA=${GCLOUD_DATA:-"${RIDE_CONFIG}/gcloud"}
   docker run --rm -it \
     -u $(id -u $USER):$(id -g $USER) \
@@ -1238,7 +1240,7 @@ run_image(){
     -it \
     `docker_mount_os` \
     --name run_image \
-    "$1"
+    "$@"
 }
 
 virsh(){
