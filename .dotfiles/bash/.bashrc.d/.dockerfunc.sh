@@ -130,6 +130,7 @@ adobe(){
   del_stopped adobe
   docker run  \
     -v `get_host_pwd`:/home/acroread/Documents:rw \
+    -v /dev/shm \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e uid=${HOST_USER_ID} \
     -e gid=${HOST_USER_GID} \
@@ -292,7 +293,7 @@ desktop(){
     --privileged \
     --ipc=shareable \
     -e RESOLUTION="${RESOLUTION}" \
-    -e VNC_PASSWORD="${VNC_PASSWORD}" \
+    -e VNC_PASSWORD \
     --name desktop \
     -p ${VNC_PORT}:5900 `# vnc viewer`\
     -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -325,8 +326,7 @@ firefox(){
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -e HOME=/home \
     --ipc=container:desktop \
-    --memory 2gb \
-    --cpuset-cpus 0 \
+    -v /dev/shm:/dev/shm \
     -v /etc/localtime:/etc/localtime:ro \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e PULSE_SERVER=pulseaudio \
