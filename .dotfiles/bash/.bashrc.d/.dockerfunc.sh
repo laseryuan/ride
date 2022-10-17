@@ -284,7 +284,6 @@ dcos(){
 }
 
 desktop(){
-  VNC_PORT=${VNC_PORT:-"5900"}
   RESOLUTION=${RESOLUTION:-"1280x720"}
   del_stopped desktop
 
@@ -295,7 +294,6 @@ desktop(){
     -e RESOLUTION="${RESOLUTION}" \
     -e VNC_PASSWORD \
     --name desktop \
-    -p ${VNC_PORT}:5900 `# vnc viewer`\
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
