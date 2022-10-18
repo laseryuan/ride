@@ -210,23 +210,28 @@ cheese(){
 }
 
 chrome(){
+  del_stopped chrome
+
   CHROME_DATA=${CHROME_DATA:-"${RIDE_CONFIG}/chrome"}
-  relies_on desktop
+
+  # use docker vnc if not specify using host's display
+  if [[ "$1" != "host" ]]; then
+    relies_on desktop
+  fi
+
   # add flags for proxy if passed
-  local proxy=
-  local map
-  local args=$*
   if [[ "$1" == "tor" ]]; then
     relies_on torproxy
 
+    local proxy=
+    local map
+    local args=$*
     map="MAP * ~NOTFOUND , EXCLUDE torproxy"
     proxy="socks5://torproxy:9050"
     args="https://check.torproject.org/api/ip ${*:2}"
   fi
 
-  del_stopped chrome
-
-  docker run -d \
+  local docker_option+=" \
     --security-opt seccomp:unconfined \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
@@ -234,16 +239,26 @@ chrome(){
     --group-add video \
     -e HOME=/home \
     -v "${CHROME_DATA}:/home" \
-    --ipc=container:desktop \
     -v /dev/shm:/dev/shm \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /etc/localtime:/etc/localtime:ro \
     -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
-    $DOCKER_REPO_PREFIX/chrome \
+  "
+
+  if [[ "$1" != "host" ]]; then
+    docker_option+=" \
+      --ipc=container:desktop \
+    "
+  fi
+
+  docker run -d \
+    ${docker_option} \
+    "$DOCKER_REPO_PREFIX"/chrome \
     --proxy-server="$proxy" \
     --host-resolver-rules="$map" "$args"
 }
+
 consul(){
   del_stopped consul
 
