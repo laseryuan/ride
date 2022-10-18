@@ -308,8 +308,13 @@ desktop(){
     --ipc=shareable \
     -e RESOLUTION="${RESOLUTION}" \
     -e VNC_PASSWORD \
+    -e USER=${HOST_USER_NAME} \
     --name desktop \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    -v "$(command -v docker):/usr/bin/docker" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /dev/shm:/dev/shm \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
