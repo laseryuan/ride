@@ -314,7 +314,6 @@ desktop(){
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -v /dev/shm:/dev/shm \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
