@@ -300,6 +300,7 @@ dcos(){
 
 desktop(){
   RESOLUTION=${RESOLUTION:-"1280x720"}
+  VNC_PASSWORD=${VNC_PASSWORD:-"ride"} \
   del_stopped desktop
 
   docker run -d \
@@ -307,7 +308,7 @@ desktop(){
     --privileged \
     --ipc=shareable \
     -e RESOLUTION="${RESOLUTION}" \
-    -e VNC_PASSWORD \
+    -e VNC_PASSWORD="${VNC_PASSWORD}" \
     -e USER=${HOST_USER_NAME} \
     --name desktop \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
