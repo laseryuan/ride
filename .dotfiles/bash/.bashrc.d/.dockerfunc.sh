@@ -86,6 +86,9 @@ relies_on(){
   for container in "$@"; do
     local state
     state=$(docker inspect --format "{{.State.Running}}" "$container" 2>/dev/null)
+    if [[ "$container" == "desktop" ]]; then
+      DISPLAY="unix:1"
+    fi
 
     if [[ "$state" == "false" ]] || [[ "$state" == "" ]]; then
       echo "$container is not running, starting it for you."
@@ -127,11 +130,13 @@ alias yt='docker run --rm -u $(id -u):$(id -g) -v $PWD:/data vimagick/youtube-dl
 # alias mustache='docker run -v `pwd`:/data --rm coolersport/mustache'
 
 adobe(){
+  relies_on desktop
+
   del_stopped adobe
   docker run  \
     -v `get_host_pwd`:/home/acroread/Documents:rw \
-    -v /dev/shm \
-    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v /dev/shm:/dev/shm \
+    -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e uid=${HOST_USER_ID} \
     -e gid=${HOST_USER_GID} \
     --name adobe \
@@ -217,9 +222,6 @@ chrome(){
   # use docker vnc if not specify using host's display
   if [[ "$1" != "host" ]]; then
     relies_on desktop
-    DISPLAY="unix:1"
-  else
-    DISPLAY=${DISPLAY}
   fi
 
   # add flags for proxy if passed
