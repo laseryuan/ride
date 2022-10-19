@@ -217,6 +217,9 @@ chrome(){
   # use docker vnc if not specify using host's display
   if [[ "$1" != "host" ]]; then
     relies_on desktop
+    DISPLAY="unix:1"
+  else
+    DISPLAY=${DISPLAY}
   fi
 
   # add flags for proxy if passed
@@ -240,7 +243,7 @@ chrome(){
     -e HOME=/home \
     -v "${CHROME_DATA}:/home" \
     -v /dev/shm:/dev/shm \
-    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /etc/localtime:/etc/localtime:ro \
     -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
