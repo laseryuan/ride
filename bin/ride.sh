@@ -37,13 +37,13 @@ use-gitconfig-if-exists() {
 }
 
 user-docker-option-if-exists() {
-  [ -z "$DOCKER_OPTION" ] || {
-    echo "$DOCKER_OPTION"
+  [ -z "$docker_option" ] || {
+    echo "$docker_option"
   }
 }
 
 debug-mode() {
-  [ -z "$DEBUG" ] || {
+  [ $debug_mode -eq 1 ] && {
     echo "echo"
   }
 }
@@ -93,6 +93,21 @@ get-host-name() {
 }
 
 create-ride() {
+  local docker_option
+  local debug_mode=0
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -o|--docker) docker_option+=" $2 "; shift ;;
+        -p) docker_option+=" -p $2 "; shift ;;
+        -v) docker_option+=" -v $2 "; shift ;;
+        -d) docker_option+=" -d " ;;
+        -f|--forward) docker_option+=" -p 12345:12345 " ;;
+        --debug) debug_mode=1 ;;
+        *) break ;;
+    esac
+    shift
+  done
+
   mount_path=`get-mount-path`
 
   $(debug-mode) docker run \
@@ -100,7 +115,6 @@ create-ride() {
     --name=`get-ride-name` \
     `# network`\
     --network ride_network \
-    -p 12345:12345 \
     `# environment virable`\
     -e DISPLAY \
     -e TERM \
@@ -174,4 +188,5 @@ main() {
 }
 
 main "$@"
+
 
