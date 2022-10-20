@@ -82,6 +82,18 @@ rmctr(){
   # shellcheck disable=SC2068
   docker rm -f $@ 2>/dev/null || true
 }
+
+wait_for(){
+  local container="$1"
+  local container_health
+  until [[ "$container_health" == '"healthy"' ]]
+  do
+    echo "desktop not ready ..."
+    sleep 5
+    container_health=`docker inspect --format='{{json .State.Health.Status}}' $container`
+  done
+}
+
 relies_on(){
   for container in "$@"; do
     local state
@@ -94,13 +106,7 @@ relies_on(){
       echo "$container is not running, starting it for you."
       $container
       if [[ "$container" == "desktop" ]]; then
-        local container_health
-        until [[ "$container_health" == '"healthy"' ]]
-        do
-          echo "desktop not ready ..."
-          sleep 5
-          container_health=`docker inspect --format='{{json .State.Health.Status}}' desktop`
-        done
+        wait_for $container
       fi
     fi
   done
@@ -305,7 +311,7 @@ dcos(){
 
 desktop(){
   RESOLUTION=${RESOLUTION:-"1280x720"}
-  VNC_PASSWORD=${VNC_PASSWORD:-"ride"} \
+  VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
   del_stopped desktop
 
   docker run -d \
