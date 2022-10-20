@@ -98,7 +98,9 @@ create-ride() {
   $(debug-mode) docker run \
     -it --rm \
     --name=`get-ride-name` \
+    `# network`\
     --network ride_network \
+    -p 12345:12345 \
     `# environment virable`\
     -e DISPLAY \
     -e TERM \
