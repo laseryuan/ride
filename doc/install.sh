@@ -11,3 +11,5 @@ cat "/usr/local/bin/$bin_name.sh"
 echo "EOF_RIDE"
 
 echo "sudo chmod +x /usr/local/bin/$bin_name"
+
+echo "mkdir -p ~/.ride/chrome ~/.ride/firefox"
