@@ -102,6 +102,7 @@ create-ride() {
         -v) docker_option+=" -v $2 "; shift ;;
         -d) docker_option+=" -d " ;;
         -f|--forward) docker_option+=" -p 12341-12345:12341-12345 -p 22222:22 " ;;
+        -s|--ssh) docker_option+=" -p 22222:22 "; SSH_MODE=1 ;;
         --debug) debug_mode=1 ;;
         *) break ;;
     esac
