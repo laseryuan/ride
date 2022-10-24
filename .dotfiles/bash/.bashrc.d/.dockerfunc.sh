@@ -324,6 +324,7 @@ desktop(){
     --name desktop \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    -v /etc/localtime:/etc/localtime:ro \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
@@ -932,20 +933,27 @@ registrator(){
     --name registrator \
     gliderlabs/registrator consul:
 }
+
 remmina(){
   del_stopped remmina
 
+  REMMINA_DATA=${REMMINA_DATA:-"${RIDE_CONFIG}/remmina"}
+
   docker run -d \
-    -v /etc/localtime:/etc/localtime:ro \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -e "DISPLAY=unix${DISPLAY}" \
-    -e GDK_SCALE \
-    -e GDK_DPI_SCALE \
-    -v "${HOME}/.remmina:/home/remmina/.remmina" \
-    --name remmina \
-    --net host \
-    ${MY_DOCKER_REPO_PREFIX}/remmina
+      --network="${RIDE_NETWORK}" \
+      -v /etc/localtime:/etc/localtime:ro \
+      -v /tmp/.X11-unix:/tmp/.X11-unix \
+      -e "DISPLAY=unix${DISPLAY}" \
+      -e GDK_SCALE \
+      -e GDK_DPI_SCALE \
+      --name remmina \
+      -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+      -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+      -v "${REMMINA_DATA}":/home/data -e HOME=/home/data --workdir=/home/data \
+      ${MY_DOCKER_REPO_PREFIX}/remmina \
+      remmina
 }
+
 ricochet(){
   del_stopped ricochet
 
