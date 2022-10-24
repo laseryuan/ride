@@ -5,6 +5,7 @@ set -e
 main() {
   case "$1" in
     ride)
+      shift
       enable-docker.sh
       user-mapping.sh
 
@@ -14,11 +15,10 @@ main() {
         CHANGE_USER="gosu ride"
       fi
 
-      [ $SSH_MODE -eq 1 ] && {
+      [ ${SSH_MODE} ] && {
         ${CHANGE_USER} sshstart
       }
 
-      shift
       [ -n "$1" ] && { 
         ${CHANGE_USER} "$@"; true; 
       } || {

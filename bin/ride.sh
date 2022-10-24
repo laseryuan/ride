@@ -43,7 +43,7 @@ user-docker-option-if-exists() {
 }
 
 debug-mode() {
-  [ $debug_mode -eq 1 ] && {
+  [ $debug_mode ] && {
     echo "echo"
   }
 }
@@ -94,7 +94,6 @@ get-host-name() {
 
 create-ride() {
   local docker_option
-  local debug_mode=0
   while [[ "$#" -gt 0 ]]; do
     case $1 in
         -o|--docker) docker_option+=" $2 "; shift ;;
@@ -102,8 +101,8 @@ create-ride() {
         -v) docker_option+=" -v $2 "; shift ;;
         -d) docker_option+=" -d " ;;
         -f|--forward) docker_option+=" -p 12341-12345:12341-12345 -p 22222:22 " ;;
-        -s|--ssh) docker_option+=" -p 22222:22 "; SSH_MODE=1 ;;
-        --debug) debug_mode=1 ;;
+        -s|--ssh) docker_option+=" -p 22222:22 "; SSH_MODE=0 ;;
+        --debug) debug_mode=0 ;;
         *) break ;;
     esac
     shift
