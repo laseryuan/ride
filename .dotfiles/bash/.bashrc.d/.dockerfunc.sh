@@ -118,14 +118,19 @@ relies_on(){
 docker_mount_os(){
   echo \
     --network="${RIDE_NETWORK}" \
-    --ipc=container:desktop \
     -v /dev/shm:/dev/shm \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
     -v `get_host_pwd`:/home/data -e HOME=/home/data --workdir=/home/data \
-    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v /etc/localtime:/etc/localtime:ro
+}
+
+docker_X11(){
+  echo \
+    --ipc=container:desktop \
+    -e DISPLAY=:1 --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
-    -e GDK_SCALE -e GDK_DPI_SCALE -v /etc/localtime:/etc/localtime:ro
+    -e GDK_SCALE -e GDK_DPI_SCALE
 }
 
 #
@@ -139,13 +144,16 @@ adobe(){
   relies_on desktop
 
   del_stopped adobe
+
+  local docker_option+=$(docker_X11)
+
   docker run  \
     -v `get_host_pwd`:/home/acroread/Documents:rw \
     -v /dev/shm:/dev/shm \
-    -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix \
     -e uid=${HOST_USER_ID} \
     -e gid=${HOST_USER_GID} \
     --name adobe \
+    ${docker_option} \
     chrisdaish/acroread
 }
 
@@ -251,15 +259,16 @@ chrome(){
     -e HOME=/home \
     -v "${CHROME_DATA}:/home" \
     -v /dev/shm:/dev/shm \
-    -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /etc/localtime:/etc/localtime:ro \
     -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
   "
 
   if [[ "$1" != "host" ]]; then
+    docker_option+=$(docker_X11)
+  else
     docker_option+=" \
-      --ipc=container:desktop \
+      -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     "
   fi
 
@@ -322,7 +331,6 @@ desktop(){
     -e VNC_PASSWORD="${VNC_PASSWORD}" \
     -e USER=${HOST_USER_NAME} \
     --name desktop \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
     -v /etc/localtime:/etc/localtime:ro \
     -v "$(command -v docker):/usr/bin/docker" \
@@ -335,11 +343,11 @@ scrcpy(){
   del_stopped scrcpy
   relies_on desktop
 
+  local docker_option+=$(docker_X11)
+
   docker run --rm -it \
-    --ipc=container:desktop \
     -v ${SCRCPY_DATA}:/root/.android \
-    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-    \
+    ${docker_option} \
     lasery/scrcpy \
     sh
 }
@@ -351,19 +359,25 @@ firefox(){
 
   use-sound-device-if-exists
 
-  docker run -d \
+  local docker_option+=" \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -e HOME=/home \
     --ipc=container:desktop \
     -v /dev/shm:/dev/shm \
     -v /etc/localtime:/etc/localtime:ro \
-    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e DISPLAY=:1 --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
     -v "${FIREFOX_DATA}:/home" \
     -e GDK_SCALE \
     -e GDK_DPI_SCALE \
     --name firefox \
+  "
+
+  docker_option+=$(docker_X11)
+
+  docker run -d \
+    ${docker_option} \
     ${MY_DOCKER_REPO_PREFIX}/firefox "$@"
 }
 
@@ -942,8 +956,7 @@ remmina(){
   docker run -d \
       --network="${RIDE_NETWORK}" \
       -v /etc/localtime:/etc/localtime:ro \
-      -v /tmp/.X11-unix:/tmp/.X11-unix \
-      -e "DISPLAY=unix${DISPLAY}" \
+      -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
       -e GDK_SCALE \
       -e GDK_DPI_SCALE \
       --name remmina \
