@@ -128,7 +128,8 @@ docker_mount_os(){
 docker_X11(){
   echo \
     --ipc=container:desktop \
-    -e DISPLAY=:1 --volumes-from desktop \
+    -e DISPLAY=:1 \
+    -v desktop:/tmp/.X11-unix \
     -e PULSE_SERVER=pulseaudio \
     -e GDK_SCALE -e GDK_DPI_SCALE
 }
@@ -148,6 +149,7 @@ adobe(){
   local docker_option+=$(docker_X11)
 
   docker run  \
+    -d \
     -v `get_host_pwd`:/home/acroread/Documents:rw \
     -v /dev/shm:/dev/shm \
     -e uid=${HOST_USER_ID} \
@@ -335,6 +337,7 @@ desktop(){
     -v /etc/localtime:/etc/localtime:ro \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    -v desktop:/tmp/.X11-unix \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
