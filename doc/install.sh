@@ -12,4 +12,4 @@ echo "EOF_RIDE"
 
 echo "sudo chmod +x /usr/local/bin/$bin_name"
 
-echo "mkdir -p ~/.ride/chrome ~/.ride/firefox ~/.ride/remmina"
+echo "mkdir -p ~/.ride/Share ~/.ride/chrome ~/.ride/firefox ~/.ride/remmina"

@@ -150,8 +150,7 @@ adobe(){
 
   docker run  \
     -d \
-    -v `get_host_pwd`:/home/acroread/Documents:rw \
-    -v /dev/shm:/dev/shm \
+    -v "${RIDE_CONFIG}/Share":/home/acroread/Documents \
     -e uid=${HOST_USER_ID} \
     -e gid=${HOST_USER_GID} \
     --name adobe \
@@ -259,8 +258,9 @@ chrome(){
     --group-add audio \
     --group-add video \
     -e HOME=/home \
-    -v "${CHROME_DATA}:/home" \
     -v /dev/shm:/dev/shm \
+    -v "${CHROME_DATA}:/home" \
+    -v "${RIDE_CONFIG}/Share":/home/Downloads \
     -v /etc/localtime:/etc/localtime:ro \
     -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
@@ -372,6 +372,7 @@ firefox(){
     -e DISPLAY=:1 --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
     -v "${FIREFOX_DATA}:/home" \
+    -v "${RIDE_CONFIG}/Share:/home/Share" \
     -e GDK_SCALE \
     -e GDK_DPI_SCALE \
     --name firefox \
