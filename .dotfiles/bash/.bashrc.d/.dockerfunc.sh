@@ -121,7 +121,7 @@ docker_mount_os(){
     -v /dev/shm:/dev/shm \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-    -v `get_host_pwd`:/home/data -e HOME=/home/data --workdir=/home/data \
+    -v `get_host_pwd`:/tmp/data -e HOME=/tmp --workdir=/tmp/data \
     -v /etc/localtime:/etc/localtime:ro
 }
 
@@ -731,16 +731,16 @@ nmap(){
     --net host \
     ${DOCKER_REPO_PREFIX}/nmap "$@"
 }
+
 node(){
+  local docker_option+=`docker_mount_os`
+
   docker run --rm -it \
-    --network="${RIDE_NETWORK}" \
-    -u $(id -u $USER):$(id -g $USER) \
-    -e HOME=/tmp \
-    --workdir=/tmp/data \
-    -v `get_host_pwd`:/tmp/data \
-    --name node \
-    node:slim node "$@"
+      ${docker_option} \
+      --name node \
+      node bash
 }
+
 notify_osd(){
   del_stopped notify_osd
 
@@ -934,6 +934,16 @@ pulseaudio(){
     --name pulseaudio \
     ${DOCKER_REPO_PREFIX}/pulseaudio
 }
+
+python(){
+  local docker_option+=`docker_mount_os`
+
+  docker run --rm -it \
+      ${docker_option} \
+      --name python \
+      python bash
+}
+
 rainbowstream(){
   docker run -it --rm \
     -v /etc/localtime:/etc/localtime:ro \
