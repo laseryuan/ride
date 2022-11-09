@@ -348,6 +348,10 @@ scrcpy(){
 
   local docker_option+=$(docker_X11)
 
+  docker_option+=" \
+    --network="${RIDE_NETWORK}" \
+  "
+
   docker run --rm -it \
     -v ${SCRCPY_DATA}:/root/.android \
     ${docker_option} \
