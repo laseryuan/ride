@@ -452,6 +452,19 @@ gcloud(){
   gcloud-sdk gcloud "$@"
 }
 
+dgcloud(){
+  del_stopped dgcloud
+  GCLOUD_DATA=${GCLOUD_DATA:-"${RIDE_CONFIG}/gcloud"}
+
+  docker run --rm -it \
+    `docker_mount_os` \
+    -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
+    -v "${GCLOUD_DATA}":/tmp/.config/gcloud \
+    --name dgcloud \
+    google/cloud-sdk:alpine \
+    bash
+}
+
 gimp(){
   del_stopped gimp
 
