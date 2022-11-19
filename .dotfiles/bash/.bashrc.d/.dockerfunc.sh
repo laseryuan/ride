@@ -430,29 +430,7 @@ gcalcli(){
     ${DOCKER_REPO_PREFIX}/gcalcli "$@"
 }
 
-gcloud-sdk(){
-  del_stopped gcloud
-
-  GCLOUD_DATA=${GCLOUD_DATA:-"${RIDE_CONFIG}/gcloud"}
-  docker run --rm -it \
-    -u $(id -u $USER):$(id -g $USER) \
-    -e HOME=/tmp \
-    -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
-    -v "${GCLOUD_DATA}":/tmp/.config/gcloud \
-    -v `get_host_pwd`:/tmp/data \
-    --name gcloud \
-    google/cloud-sdk:alpine "$@"
-}
-
-gsutil(){
-  gcloud-sdk gsutil "$@"
-}
-
 gcloud(){
-  gcloud-sdk gcloud "$@"
-}
-
-dgcloud(){
   del_stopped dgcloud
   GCLOUD_DATA=${GCLOUD_DATA:-"${RIDE_CONFIG}/gcloud"}
 
@@ -461,7 +439,7 @@ dgcloud(){
     -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
     -v "${GCLOUD_DATA}":/tmp/.config/gcloud \
     --name dgcloud \
-    google/cloud-sdk:alpine \
+    google/cloud-sdk \
     bash
 }
 
