@@ -102,17 +102,22 @@ WORKDIR /home/ride
 RUN git config --global user.email "{{GIT_EMAIL}}" && \
   git config --global user.name "{{GIT_NAME}}"
 
+# Vim
+COPY --chown=ride .dotfiles/vim .dotfiles/vim
+RUN \
+  cd .dotfiles && \
+  stow -t ~ vim
+
+RUN set -ex; \
+    git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
+    vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall;
+
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
 RUN mkdir projects .ssh .kr && \
     rm ~/.bashrc && \
     cd .dotfiles && \
-    stow -t ~ vim tmux bash && \
-    ``
-
-RUN set -ex; \
-    git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
-    vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall; \
+    stow -t ~ tmux bash && \
     chmod a+w -R /home/ride
 
 # mbuild
