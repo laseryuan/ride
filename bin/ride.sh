@@ -121,6 +121,7 @@ create-ride() {
     -e HOST_pwd=$(pwd) \
     -e HOST_HOME=$HOME \
     -e HOST_NAME=`get-host-name` \
+    -e SSH_MODE=${SSH_MODE} \
     \
     `# mount data`\
     $(docker-option-mount-projects "$@") \
