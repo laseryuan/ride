@@ -958,7 +958,8 @@ python(){
   docker run --rm -it \
       ${docker_option} \
       --name python \
-      python bash
+      ${MY_DOCKER_REPO_PREFIX}/python \
+      bash
 }
 
 rainbowstream(){
