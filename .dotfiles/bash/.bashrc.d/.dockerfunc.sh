@@ -36,7 +36,7 @@ loadenv () {
   fi
 }
 
-get_host_pwd () {
+get_ride_path () {
   local folder_name=${HOST_pwd##*/};
   local ride_path
   if [[ "$folder_name" == "projects" ]]; then
@@ -44,9 +44,16 @@ get_host_pwd () {
   else
     ride_path=/home/ride/projects/${folder_name};
   fi
+  echo $ride_path
+}
 
-  local rel_path=`realpath --relative-to=${ride_path} ${PWD}`;
-  echo ${HOST_pwd}/${rel_path}
+get_host_pwd () {
+  if [[ "${PWD}" =~ "/home/ride/.ride" ]]; then
+    echo ${PWD/ride/$HOST_USER_NAME}
+  else
+    local rel_path=$(realpath --relative-to=$(get_ride_path) "${PWD}");
+    echo ${HOST_pwd}/${rel_path}
+  fi
 }
 
 use-sound-device-if-exists() {
@@ -121,7 +128,7 @@ docker_mount_os(){
     -v /dev/shm:/dev/shm \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-    -v `get_host_pwd`:/tmp/data -e HOME=/tmp --workdir=/tmp/data \
+    -v "$(get_host_pwd)":/tmp/data -e HOME=/tmp --workdir=/tmp/data \
     -v /etc/localtime:/etc/localtime:ro
 }
 
