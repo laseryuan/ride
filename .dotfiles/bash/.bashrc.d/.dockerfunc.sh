@@ -119,6 +119,11 @@ relies_on(){
   done
 }
 
+if_debug_mode() {
+  [ $debug_mode ] && {
+    echo "echo"
+  }
+}
 #
 # Container Options
 #
@@ -1304,9 +1309,26 @@ run_image(){
   relies_on desktop
   use-sound-device-if-exists
 
-  docker run \
+  local docker_option
+  unset debug_mode
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -o|--docker) docker_option+=" $2 "; shift ;;
+        -p) docker_option+=" -p $2 "; shift ;;
+        -v) docker_option+=" -v $2 "; shift ;;
+        -d) docker_option+=" -d " ;;
+        -r|--reset) docker_option+=" --entrypoint= " ;;
+        --rm) docker_option+=" --rm " ;;
+        --debug) debug_mode=0 ;;
+        *) break ;;
+    esac
+    shift
+  done
+
+  $(if_debug_mode) docker run \
     -it \
-    `docker_mount_os` \
+    $(docker_mount_os) \
+    ${docker_option} \
     --name run_image \
     "$@"
 }
