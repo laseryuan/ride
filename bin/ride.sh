@@ -125,6 +125,7 @@ create-ride() {
     \
     `# mount data`\
     $(docker-option-mount-projects "$@") \
+    -v `get-folder "$HOME/.ride"`:/home/ride/.ride \
     \
     `# as host user`\
     -e HOST_USER_NAME=$(id -u -n) -e HOST_USER_ID=$(id -u) -e HOST_USER_GID=$(id -g) \

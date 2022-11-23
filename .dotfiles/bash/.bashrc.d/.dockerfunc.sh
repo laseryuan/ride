@@ -338,6 +338,7 @@ desktop(){
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v desktop:/tmp/.X11-unix \
+    -v "${RIDE_CONFIG}/Share":"/home/${HOST_USER_NAME}/Share" \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
