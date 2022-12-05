@@ -60,10 +60,10 @@ get_folder() {
   ret="$1"
   [ -L "$ret" ] && ret=`realpath "$ret"`
   [ -d "$ret" ] || {
-    echo "Creating directory: $ret" >&2
+    echo "Creating directory: $ret" > /tmp/ride.log
     mkdir "$ret"
   }
-  echo $ret
+  echo $ret >/dev/null
 }
 
 use-sound-device-if-exists() {

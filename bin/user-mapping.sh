@@ -14,7 +14,8 @@ fi
 
 # if host user id is the same as ride  we do not need to do anything
 if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000} ]]; then
-    echo "Ride has the Same user id as host." ; exit 0
+    echo "Ride has the Same user id as host." > /tmp/ride.log
+    exit 0
 fi
 
 if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
