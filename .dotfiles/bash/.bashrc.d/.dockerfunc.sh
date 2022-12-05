@@ -986,6 +986,7 @@ remmina(){
       -u "${HOST_USER_ID}:${HOST_USER_GID}" \
       -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
       -v "${REMMINA_DATA}":/home/data -e HOME=/home/data --workdir=/home/data \
+      -v "${RIDE_CONFIG}/Share":/home/Share \
       ${MY_DOCKER_REPO_PREFIX}/remmina \
       remmina
 }
