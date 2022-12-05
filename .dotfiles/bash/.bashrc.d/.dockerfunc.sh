@@ -56,6 +56,16 @@ get_host_pwd () {
   fi
 }
 
+get_folder() {
+  ret="$1"
+  [ -L "$ret" ] && ret=`realpath "$ret"`
+  [ -d "$ret" ] || {
+    echo "Creating directory: $ret" >&2
+    mkdir "$ret"
+  }
+  echo $ret
+}
+
 use-sound-device-if-exists() {
   if [[ -f "/dev/snd" ]]; then
     relies_on pulseaudio
@@ -189,13 +199,15 @@ audacity(){
     --name audacity \
     ${DOCKER_REPO_PREFIX}/audacity
 }
-aws(){
-  docker run -it --rm \
-    -v "${HOME}/.aws:/root/.aws" \
-    --log-driver none \
-    --name aws \
-    ${DOCKER_REPO_PREFIX}/awscli "$@"
+
+aws ()
+{
+    del_stopped aws;
+    get_folder /home/ride/.ride/aws
+    AWS_DATA=${AWS_DATA:-"${RIDE_CONFIG}/aws"};
+    docker run --rm -it `docker_mount_os` -v "${AWS_DATA}":/root/.aws --name aws --entrypoint='' amazon/aws-cli bash
 }
+
 az(){
   docker run -it --rm \
     -v "${HOME}/.azure:/root/.azure" \
