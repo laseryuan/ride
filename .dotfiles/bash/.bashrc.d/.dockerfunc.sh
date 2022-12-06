@@ -49,7 +49,7 @@ get_ride_path () {
 
 get_host_pwd () {
   if [[ "${PWD}" =~ "/home/ride/.ride" ]]; then
-    echo ${PWD/ride/$HOST_USER_NAME}
+    echo ${PWD/\/home\/ride/$HOST_HOME}
   else
     local rel_path=$(realpath --relative-to=$(get_ride_path) "${PWD}");
     echo ${HOST_pwd}/${rel_path}
