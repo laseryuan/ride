@@ -1317,8 +1317,8 @@ travis(){
     ${DOCKER_REPO_PREFIX}/travis "$@"
 }
 
-run_image(){
-  del_stopped run_image 
+docker_run(){
+  del_stopped docker_run 
   relies_on desktop
   use-sound-device-if-exists
 
@@ -1342,7 +1342,7 @@ run_image(){
     -it \
     $(docker_mount_os) \
     ${docker_option} \
-    --name run_image \
+    --name docker_run \
     "$@"
 }
 
