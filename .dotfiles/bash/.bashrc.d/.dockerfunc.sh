@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Bash wrappers for docker run commands
 # docker run --rm -it \
     # --entrypoint=/bin/bash \
@@ -364,6 +364,26 @@ desktop(){
     -v desktop:/tmp/.X11-unix \
     -v "${RIDE_CONFIG}/Share":"/home/${HOST_USER_NAME}/Share" \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
+}
+
+dev_bash(){
+  local docker_option+=`docker_mount_os`
+
+  docker run --rm -it \
+      ${docker_option} \
+      --name dev_bash \
+      ${MY_DOCKER_REPO_PREFIX}/bash \
+      bash -l
+}
+
+dev_python(){
+  local docker_option+=`docker_mount_os`
+
+  docker run --rm -it \
+      ${docker_option} \
+      --name python \
+      ${MY_DOCKER_REPO_PREFIX}/python \
+      bash
 }
 
 scrcpy(){
@@ -953,16 +973,6 @@ pulseaudio(){
     --group-add audio \
     --name pulseaudio \
     ${DOCKER_REPO_PREFIX}/pulseaudio
-}
-
-python(){
-  local docker_option+=`docker_mount_os`
-
-  docker run --rm -it \
-      ${docker_option} \
-      --name python \
-      ${MY_DOCKER_REPO_PREFIX}/python \
-      bash
 }
 
 rainbowstream(){
@@ -1571,3 +1581,27 @@ yubico_piv_tool(){
     ${DOCKER_REPO_PREFIX}/yubico-piv-tool bash
 }
 alias yubico-piv-tool="yubico_piv_tool"
+
+if [[ "$1" = "test" ]]; then
+  # ./.dockerfunc.sh test
+  function get_host_pwd {
+    echo "calling: get_host_pwd $@" >> /tmp/ride.log
+    echo "/home/laser/projects/ride"
+  }
+  function docker {
+    echo "calling: docker $@"
+  }
+  function docker_mount_os {
+    return
+  }
+
+  if [[ $(dev_python) != "calling: docker run --rm -it --name python lasery/python bash" ]]; then
+    echo "TEST FAILURE: dev_python"
+    exit 1
+  fi
+
+  if [[ $(dev_bash) != "calling: docker run --rm -it --name dev_bash lasery/bash bash -l" ]]; then
+    echo "TEST FAILURE: dev_bash"
+    exit 1
+  fi
+fi
