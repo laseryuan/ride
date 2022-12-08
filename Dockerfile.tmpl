@@ -132,7 +132,8 @@ COPY --chown=ride doc/ /doc/
 COPY --chown=ride bin/ /usr/local/bin/
 
 # Tests
-RUN python3 -m pytest ./mbuild/utils/build.py
+COPY test.sh /test.sh
+RUN /test.sh
 
 USER root
 ENV HOME /home/ride
