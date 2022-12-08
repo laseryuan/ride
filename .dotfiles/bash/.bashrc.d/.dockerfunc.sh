@@ -1604,4 +1604,6 @@ if [[ "$1" = "test" ]]; then
     echo "TEST FAILURE: dev_bash"
     exit 1
   fi
+
+  echo TESTS succeed!
 fi

@@ -1,34 +1,77 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-if [[ "$1" == "mount" ]]; then
-  mount_flag=mount
+if_debug() {
+  [ $is_debug_mode ] && {
+    echo "echo"
+  }
+}
+
+main() {
+  local ssh_option
+  local is_debug_mode
+  local mount_flag
+
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --mount) mount_flag=0 ;;
+        -L|--local) ssh_option+=" -L $2 "; shift ;;
+        -R|--remote) ssh_option+=" -R $2 "; shift ;;
+        -o|--ssh) ssh_option+=" $2 "; shift ;;
+        --debug) is_debug_mode=0 ;;
+        *) break ;;
+    esac
+    shift
+  done
+
+  first=$1
+  arrIN=(${first//@/ })
+  if [ -z "${arrIN[1]}"  ]; then
+    USER=ride
+    SSHME_SERVER=${arrIN[0]}
+  else
+    USER=${arrIN[0]}
+    SSHME_SERVER=${arrIN[1]}
+  fi
+
   shift
-fi
 
-first=$1
-arrIN=(${first//@/ })
-if [ -z "${arrIN[1]}"  ]; then
-  USER=ride
-  SSHME_SERVER=${arrIN[0]}
-else
-  USER=${arrIN[0]}
-  SSHME_SERVER=${arrIN[1]}
-fi
+  if [ $mount_flag ]; then
+    sshstart $mount_flag
 
-shift
+    local SSH_FORWARD_PORT=12322
+    ssh_option+=" -R ${SSH_FORWARD_PORT}:localhost:22 "
+  fi
 
-if [[ "$mount_flag" == "mount" ]]; then
-  sshstart $mount_flag
-
-  SSH_FORWARD_PORT=12322
-  ssh \
-    -R ${SSH_FORWARD_PORT}:localhost:22 \
-    -J sish.unsown.top:2222 \
-    ${USER}@${SSHME_SERVER}
-else
-  ssh \
+  $(if_debug) ssh \
     -L 0.0.0.0:5900:desktop:5900 \
     -J sish.unsown.top:2222 \
+    ${ssh_option} \
     ${USER}@${SSHME_SERVER}
-fi
+}
 
+test (){
+  function ssh {
+    echo "calling: ssh $@"
+  }
+  function sshstart {
+    echo "calling: sshstart" >> /tmp/sshyou.log
+  }
+
+  if [[ $(main -L :3000:localhost:3000 ride@shell) != "calling: ssh -L 0.0.0.0:5900:desktop:5900 -J sish.unsown.top:2222 -L :3000:localhost:3000 ride@shell" ]]; then
+    echo "TEST FAILURE: -L"
+    exit 1
+  fi
+
+  if [[ $(main --mount ride@shell) != "calling: ssh -L 0.0.0.0:5900:desktop:5900 -J sish.unsown.top:2222 -R 12322:localhost:22 ride@shell" ]]; then
+    echo "TEST FAILURE: --mount"
+    exit 1
+  fi
+
+  echo TESTS succeed!
+}
+
+if [[ "$1" = "test" ]]; then
+  test
+else
+  main "$@"
+fi
