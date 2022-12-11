@@ -205,7 +205,7 @@ aws ()
     del_stopped aws;
     get_folder /home/ride/.ride/aws
     AWS_DATA=${AWS_DATA:-"${RIDE_CONFIG}/aws"};
-    docker run --rm -it `docker_mount_os` -v "${AWS_DATA}":/root/.aws --name aws --entrypoint='' amazon/aws-cli bash
+    docker run --rm -it `docker_mount_os` -v "${AWS_DATA}":/tmp/.aws --name aws --entrypoint='' amazon/aws-cli bash
 }
 
 az(){
