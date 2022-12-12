@@ -133,7 +133,7 @@ COPY --chown=ride bin/ /usr/local/bin/
 
 # Tests
 COPY test.sh /test.sh
-RUN /test.sh
+RUN bash -e /test.sh
 
 USER root
 ENV HOME /home/ride
