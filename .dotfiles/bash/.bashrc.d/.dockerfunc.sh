@@ -60,8 +60,8 @@ get_folder() {
   ret="$1"
   [ -L "$ret" ] && ret=`realpath "$ret"`
   [ -d "$ret" ] || {
-    echo "Creating directory: $ret" > /tmp/ride.log
-    mkdir "$ret"
+    echo "Creating directory: $ret" >> /tmp/ride.log
+    mkdir -p "$ret"
   }
   echo $ret >/dev/null
 }

@@ -14,7 +14,7 @@ fi
 
 # if host user id is the same as ride  we do not need to do anything
 if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000} ]]; then
-    echo "Ride has the Same user id as host." > /tmp/ride.log
+    echo "Ride has the Same user id as host." >> /tmp/ride.log
     exit 0
 fi
 
@@ -38,5 +38,5 @@ else
   sed -i -e "s/^${RIDE_USER}:\([^:]*\):[0-9]*:[0-9]*/${RIDE_USER}:\1:${RIDE_USER_ID}:${RIDE_USER_GID}/"  /etc/passwd
   sed -i -e "s/^${RIDE_USER}:\([^:]*\):[0-9]*/${RIDE_USER}:\1:${RIDE_USER_GID}/"  /etc/group
 
-  chown ${RIDE_USER_ID}:${RIDE_USER_GID} ${RIDE_USER_HOME}
+  chown ${RIDE_USER_ID}:${RIDE_USER_GID} ${RIDE_USER_HOME} /tmp/ride.log
 fi
