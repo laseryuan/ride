@@ -366,7 +366,7 @@ desktop(){
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
-dev_bash(){
+devsh(){
   local docker_option+=`docker_mount_os`
 
   docker run --rm -it \
@@ -376,7 +376,7 @@ dev_bash(){
       bash -l
 }
 
-dev_python(){
+devpy(){
   local docker_option+=`docker_mount_os`
 
   docker run --rm -it \
