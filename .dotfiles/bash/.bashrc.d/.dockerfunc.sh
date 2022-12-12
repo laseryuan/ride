@@ -371,7 +371,7 @@ devsh(){
 
   docker run --rm -it \
       ${docker_option} \
-      --name dev_bash \
+      --name devsh \
       ${MY_DOCKER_REPO_PREFIX}/bash \
       bash -l
 }
@@ -381,7 +381,7 @@ devpy(){
 
   docker run --rm -it \
       ${docker_option} \
-      --name python \
+      --name devpy \
       ${MY_DOCKER_REPO_PREFIX}/python \
       bash
 }
@@ -1583,6 +1583,7 @@ yubico_piv_tool(){
 alias yubico-piv-tool="yubico_piv_tool"
 
 if [[ "$1" = "test" ]]; then
+
   # ./.dockerfunc.sh test
   function get_host_pwd {
     echo "calling: get_host_pwd $@" >> /tmp/ride.log
@@ -1595,13 +1596,13 @@ if [[ "$1" = "test" ]]; then
     return
   }
 
-  if [[ $(dev_python) != "calling: docker run --rm -it --name python lasery/python bash" ]]; then
-    echo "TEST FAILURE: dev_python"
+  if [[ $(devpy) != "calling: docker run --rm -it --name devpy lasery/python bash" ]]; then
+    echo "TEST FAILURE: devpy"
     exit 1
   fi
 
-  if [[ $(dev_bash) != "calling: docker run --rm -it --name dev_bash lasery/bash bash -l" ]]; then
-    echo "TEST FAILURE: dev_bash"
+  if [[ $(devsh) != "calling: docker run --rm -it --name devsh lasery/bash bash -l" ]]; then
+    echo "TEST FAILURE: devsh"
     exit 1
   fi
 
