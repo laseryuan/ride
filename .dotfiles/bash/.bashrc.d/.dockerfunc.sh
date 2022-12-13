@@ -377,7 +377,6 @@ devsh(){
 
   docker run --rm -it \
       ${docker_option} \
-      --name devsh \
       ${MY_DOCKER_REPO_PREFIX}/bash \
       bash -l
 }
@@ -387,7 +386,6 @@ devpy(){
 
   docker run --rm -it \
       ${docker_option} \
-      --name devpy \
       ${MY_DOCKER_REPO_PREFIX}/python \
       bash
 }
@@ -1603,12 +1601,12 @@ if [[ "$1" = "test" ]]; then
     return
   }
 
-  if [[ $(devpy) != "calling: docker run --rm -it --name devpy lasery/python bash" ]]; then
+  if [[ $(devpy) != "calling: docker run --rm -it lasery/python bash" ]]; then
     echo "TEST FAILURE: devpy"
     exit 1
   fi
 
-  if [[ $(devsh) != "calling: docker run --rm -it --name devsh lasery/bash bash -l" ]]; then
+  if [[ $(devsh) != "calling: docker run --rm -it lasery/bash bash -l" ]]; then
     echo "TEST FAILURE: devsh"
     exit 1
   fi
