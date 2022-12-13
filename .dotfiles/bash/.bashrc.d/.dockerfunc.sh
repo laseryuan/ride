@@ -63,7 +63,15 @@ get_folder() {
     echo "Creating directory: $ret" >> /tmp/ride.log
     mkdir -p "$ret"
   }
-  echo $ret >/dev/null
+  echo $ret
+}
+
+get_app_host_config_path() {
+  local default_path=$(get_folder /home/ride/.ride/$1)
+  local tmp=$(get_folder $default_path)
+  local config_name=config_${1}
+  local ret=${!config_name:-"${RIDE_CONFIG}/$1"};
+  echo $ret
 }
 
 use-sound-device-if-exists() {
@@ -200,12 +208,10 @@ audacity(){
     ${DOCKER_REPO_PREFIX}/audacity
 }
 
-aws ()
-{
-    del_stopped aws;
-    get_folder /home/ride/.ride/aws
-    AWS_DATA=${AWS_DATA:-"${RIDE_CONFIG}/aws"};
-    docker run --rm -it `docker_mount_os` -v "${AWS_DATA}":/tmp/.aws --name aws --entrypoint='' amazon/aws-cli bash
+aws () {
+  del_stopped aws;
+  local config_host=$(get_app_host_config_path aws)
+  docker run --rm -it `docker_mount_os` -v "${config_host}":/tmp/.aws --name aws --entrypoint='' amazon/aws-cli bash
 }
 
 az(){
@@ -256,7 +262,7 @@ cheese(){
 chrome(){
   del_stopped chrome
 
-  CHROME_DATA=${CHROME_DATA:-"${RIDE_CONFIG}/chrome"}
+  local config_host=$(get_app_host_config_path chrome)
 
   # use docker vnc if not specify using host's display
   if [[ "$1" != "host" ]]; then
@@ -283,7 +289,7 @@ chrome(){
     --group-add video \
     -e HOME=/home \
     -v /dev/shm:/dev/shm \
-    -v "${CHROME_DATA}:/home" \
+    -v "${config_host}:/home" \
     -v "${RIDE_CONFIG}/Share":/home/Downloads \
     -v /etc/localtime:/etc/localtime:ro \
     -v /usr/share/fonts:/usr/share/fonts:ro \
@@ -387,7 +393,7 @@ devpy(){
 }
 
 scrcpy(){
-  SCRCPY_DATA=${SCRCPY_DATA:-"${RIDE_CONFIG}/android"}
+  local config_host=$(get_app_host_config_path android)
   del_stopped scrcpy
   relies_on desktop
 
@@ -398,14 +404,14 @@ scrcpy(){
   "
 
   docker run --rm -it \
-    -v ${SCRCPY_DATA}:/root/.android \
+    -v ${config_host}:/root/.android \
     ${docker_option} \
     lasery/scrcpy \
     sh
 }
 
 firefox(){
-  FIREFOX_DATA=${FIREFOX_DATA:-"${RIDE_CONFIG}/firefox"}
+  local config_host=$(get_app_host_config_path firefox)
   del_stopped firefox
   relies_on desktop
 
@@ -420,7 +426,7 @@ firefox(){
     -v /etc/localtime:/etc/localtime:ro \
     -e DISPLAY=:1 --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
-    -v "${FIREFOX_DATA}:/home" \
+    -v "${config_host}:/home" \
     -v "${RIDE_CONFIG}/Share:/home/Share" \
     -e GDK_SCALE \
     -e GDK_DPI_SCALE \
@@ -477,12 +483,12 @@ gcalcli(){
 
 gcloud(){
   del_stopped dgcloud
-  GCLOUD_DATA=${GCLOUD_DATA:-"${RIDE_CONFIG}/gcloud"}
+  local config_host=$(get_app_host_config_path gcloud)
 
   docker run --rm -it \
     `docker_mount_os` \
     -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
-    -v "${GCLOUD_DATA}":/tmp/.config/gcloud \
+    -v "${config_host}":/tmp/.config/gcloud \
     --name dgcloud \
     google/cloud-sdk \
     bash
@@ -996,7 +1002,7 @@ registrator(){
 remmina(){
   del_stopped remmina
 
-  REMMINA_DATA=${REMMINA_DATA:-"${RIDE_CONFIG}/remmina"}
+  local config_host=$(get_app_host_config_path remmina)
 
   docker run -d \
       --network="${RIDE_NETWORK}" \
@@ -1007,7 +1013,7 @@ remmina(){
       --name remmina \
       -u "${HOST_USER_ID}:${HOST_USER_GID}" \
       -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-      -v "${REMMINA_DATA}":/home/data -e HOME=/home/data --workdir=/home/data \
+      -v "${config_host}":/home/data -e HOME=/home/data --workdir=/home/data \
       -v "${RIDE_CONFIG}/Share":/home/Share \
       ${MY_DOCKER_REPO_PREFIX}/remmina \
       remmina
@@ -1435,7 +1441,7 @@ watchman(){
 }
 
 wechat(){
-  WECHAT_DATA=${WECHAT_DATA:-"${RIDE_CONFIG}/wechat"}
+  local config_host=$(get_app_host_config_path wechat)
   del_stopped wechat
   relies_on desktop
 
@@ -1444,7 +1450,7 @@ wechat(){
   docker run -d \
     -e WINEARCH=win64 \
     -e WINEPREFIX=/home/data \
-    -v "${WECHAT_DATA}":/home/data \
+    -v "${config_host}":/home/data \
     -e HOME=/home/data --workdir=/home/data \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
@@ -1502,7 +1508,7 @@ wg(){
 }
 
 wine(){
-  WINE_DATA=${WINE_DATA:-"${RIDE_CONFIG}/wine"}
+  local config_host=$(get_app_host_config_path wine)
   del_stopped wine
   relies_on desktop
 
@@ -1514,7 +1520,7 @@ wine(){
     -e LC_ALL=zh_CN.UTF-8 \
     -e LANG=zh_CN.UTF-8 \
     -e LANGUAGE=en_US.UTF-8 \
-    -v "${WINE_DATA}":/home/data \
+    -v "${config_host}":/home/data \
     -e HOME=/home/data --workdir=/home/data \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
@@ -1583,7 +1589,8 @@ yubico_piv_tool(){
 alias yubico-piv-tool="yubico_piv_tool"
 
 if [[ "$1" = "test" ]]; then
-
+  HOST_HOME=/home/user
+  setupenv
   # ./.dockerfunc.sh test
   function get_host_pwd {
     echo "calling: get_host_pwd $@" >> /tmp/ride.log
@@ -1603,6 +1610,26 @@ if [[ "$1" = "test" ]]; then
 
   if [[ $(devsh) != "calling: docker run --rm -it --name devsh lasery/bash bash -l" ]]; then
     echo "TEST FAILURE: devsh"
+    exit 1
+  fi
+
+  function get_folder {
+    echo "/home/ride/.ride/aws"
+  }
+
+  if [[ $(get_app_host_config_path aws) != "/home/user/.ride/aws" ]]; then
+    echo "TEST FAILURE: get_app_host_config_path aws"
+    exit 1
+  fi
+
+  config_aws="/home/user/other"
+  if [[ $(get_app_host_config_path aws) != "/home/user/other" ]]; then
+    echo "TEST FAILURE: get_app_host_config_path aws: given config path"
+    exit 1
+  fi
+
+  if ! [[ $(aws) =~ "/home/user/other:/tmp/.aws" ]]; then
+    echo "TEST FAILURE: aws"
     exit 1
   fi
 
