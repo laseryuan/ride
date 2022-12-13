@@ -36,7 +36,7 @@ main() {
   shift
 
   if [ $mount_flag ]; then
-    sshstart $mount_flag
+    sshstart --restart mount
 
     local SSH_FORWARD_PORT=12322
     ssh_option+=" -R ${SSH_FORWARD_PORT}:localhost:22 "
@@ -54,7 +54,7 @@ test (){
     echo "calling: ssh $@"
   }
   function sshstart {
-    echo "calling: sshstart" >> /tmp/sshyou.log
+    echo "calling: sshstart $@"
   }
 
   if [[ $(main -L :3000:localhost:3000 ride@shell) != "calling: ssh -L 0.0.0.0:5900:desktop:5900 -J sish.unsown.top:2222 -L :3000:localhost:3000 ride@shell" ]]; then
@@ -62,7 +62,12 @@ test (){
     exit 1
   fi
 
-  if [[ $(main --mount ride@shell) != "calling: ssh -L 0.0.0.0:5900:desktop:5900 -J sish.unsown.top:2222 -R 12322:localhost:22 ride@shell" ]]; then
+  local res=$(main --mount ride@shell)
+  if ! [[ 
+    $res =~ "calling: sshstart --restart mount"
+      &&
+    $res =~ "calling: ssh -L 0.0.0.0:5900:desktop:5900 -J sish.unsown.top:2222 -R 12322:localhost:22 ride@shell"
+    ]]; then
     echo "TEST FAILURE: --mount"
     exit 1
   fi
