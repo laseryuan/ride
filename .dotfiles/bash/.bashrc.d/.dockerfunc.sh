@@ -402,10 +402,11 @@ scrcpy(){
   "
 
   docker run --rm -it \
-    -v ${config_host}:/root/.android \
+    -v ${config_host}:/home/scrcpy/.android \
     ${docker_option} \
+    --name scrcpy \
     lasery/scrcpy \
-    sh
+    bash
 }
 
 firefox(){
