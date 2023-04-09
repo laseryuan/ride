@@ -159,7 +159,7 @@ docker_X11(){
   echo \
     --ipc=container:desktop \
     -e DISPLAY=:1 \
-    -v desktop:/tmp/.X11-unix \
+    --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
     -e GDK_SCALE -e GDK_DPI_SCALE
 }
@@ -351,6 +351,28 @@ dcos(){
 }
 
 desktop(){
+  RESOLUTION=${RESOLUTION:-"1280x720"}
+  VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
+  del_stopped desktop
+
+  docker run -d \
+    --network="${RIDE_NETWORK}" \
+    --privileged \
+    --ipc=shareable \
+    -e VNC_RESOLUTION="${RESOLUTION}" \
+    -e VNC_PW="${VNC_PASSWORD}" \
+    -e VNC_PORT=5900 \
+    -e VNC_VIEW_ONLY=false \
+    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
+    --name desktop \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v "$(command -v docker):/usr/bin/docker" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "${RIDE_CONFIG}/Share":"/home/headless/Share" \
+    ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
+}
+
+desktop_dorowu(){
   RESOLUTION=${RESOLUTION:-"1280x720"}
   VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
   del_stopped desktop
