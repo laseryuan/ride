@@ -123,9 +123,6 @@ relies_on(){
   for container in "$@"; do
     local state
     state=$(docker inspect --format "{{.State.Running}}" "$container" 2>/dev/null)
-    if [[ "$container" == "desktop" ]]; then
-      DISPLAY="unix:1"
-    fi
 
     if [[ "$state" == "false" ]] || [[ "$state" == "" ]]; then
       echo "$container is not running, starting it for you."
@@ -155,15 +152,33 @@ docker_mount_os(){
     -v /etc/localtime:/etc/localtime:ro
 }
 
+docker_locale(){
+  echo \
+    "-e XMODIFIERS=@im=ibus" \
+    -e GTK_IM_MODULE=ibus \
+    -e QT_IM_MODULE=ibus \
+    -e LANG="en_US.UTF-8" \
+    -e LC_CTYPE="zh_CN.UTF-8"
+}
+
 docker_X11(){
   echo \
     --ipc=container:desktop \
-    -e DISPLAY=:1 \
-    --volumes-from desktop \
+    -e DISPLAY=unix:1 --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
-    -e GDK_SCALE -e GDK_DPI_SCALE
+    -e GDK_SCALE -e GDK_DPI_SCALE \
+    $(docker_locale)
 }
 
+docker_X11_host(){
+  echo \
+    -v /usr/share/fonts:/usr/share/fonts \
+    -v /usr/lib/locale:/usr/lib/locale \
+    -v /usr/share/zoneinfo:/usr/share/zoneinfo \
+    -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -e GDK_SCALE -e GDK_DPI_SCALE \
+    $(docker_locale)
+}
 #
 # Container Aliases
 #
@@ -244,6 +259,7 @@ cadvisor(){
   hostess add cadvisor "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' cadvisor)"
   browser-exec "http://cadvisor:8080"
 }
+
 cheese(){
   del_stopped cheese
 
@@ -291,17 +307,13 @@ chrome(){
     -v /dev/shm:/dev/shm \
     -v "${config_host}:/home" \
     -v "${RIDE_CONFIG}/Share":/home/Downloads \
-    -v /etc/localtime:/etc/localtime:ro \
-    -v /usr/share/fonts:/usr/share/fonts:ro \
     --name chrome \
   "
 
   if [[ "$1" != "host" ]]; then
     docker_option+=$(docker_X11)
   else
-    docker_option+=" \
-      -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-    "
+    docker_option+=$(docker_X11_host)
   fi
 
   docker run -d \
@@ -362,13 +374,17 @@ desktop(){
     -e VNC_RESOLUTION="${RESOLUTION}" \
     -e VNC_PW="${VNC_PASSWORD}" \
     -e VNC_PORT=5900 \
-    -e VNC_VIEW_ONLY=false \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     --name desktop \
-    -v /etc/localtime:/etc/localtime:ro \
     -v "$(command -v docker):/usr/bin/docker" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "${RIDE_CONFIG}/Share":"/home/headless/Share" \
+    -v desktop_config:/home/headless/.config \
+    -v /usr/share/fonts \
+    -v /usr/lib/locale \
+    -v /usr/share/zoneinfo \
+    -e LANG=en_US.UTF-8 \
+    -e LC_ALL=en_US.UTF-8 \
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
@@ -442,15 +458,9 @@ firefox(){
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -e HOME=/home \
-    --ipc=container:desktop \
     -v /dev/shm:/dev/shm \
-    -v /etc/localtime:/etc/localtime:ro \
-    -e DISPLAY=:1 --volumes-from desktop \
-    -e PULSE_SERVER=pulseaudio \
     -v "${config_host}:/home" \
     -v "${RIDE_CONFIG}/Share:/home/Share" \
-    -e GDK_SCALE \
-    -e GDK_DPI_SCALE \
     --name firefox \
   "
 
