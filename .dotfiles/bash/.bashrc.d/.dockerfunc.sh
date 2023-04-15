@@ -152,6 +152,13 @@ docker_mount_os(){
     -v /etc/localtime:/etc/localtime:ro
 }
 
+docker_command(){
+  echo \
+    -v "$(command -v docker):/usr/bin/docker" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    --group-add "$HOST_DOCKER_ID"
+}
+
 docker_locale(){
   echo \
     "-e XMODIFIERS=@im=ibus" \
@@ -376,8 +383,7 @@ desktop(){
     -e VNC_PORT=5900 \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     --name desktop \
-    -v "$(command -v docker):/usr/bin/docker" \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+    $(docker_command) \
     -v "${RIDE_CONFIG}/Share":"/home/headless/Share" \
     -v desktop_config:/home/headless/.config \
     -v /usr/share/fonts \
