@@ -117,8 +117,9 @@ COPY --chown=ride .dotfiles .dotfiles
 RUN mkdir projects .ssh .kr && \
     rm ~/.bashrc && \
     cd .dotfiles && \
-    stow -t ~ tmux bash && \
+    stow -t ~ tmux bash ssh && \
     chmod a+w -R /home/ride
+RUN chmod 600 .dotfiles/ssh/.ssh/config
 
 # mbuild
 COPY --chown=ride mbuild /home/ride/mbuild
