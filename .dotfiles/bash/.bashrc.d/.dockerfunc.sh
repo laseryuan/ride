@@ -142,6 +142,32 @@ if_debug_mode() {
 #
 # Container Options
 #
+parse_arg(){
+  local use_host_x11
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -o|--docker) docker_option+=" $2 "; shift ;;
+        -p) docker_option+=" -p $2 "; shift ;;
+        -v) docker_option+=" -v $2 "; shift ;;
+        --debug) debug_mode=0 ;;
+        --host) use_host_x11=0 ;;
+        *) break ;;
+    esac
+    shift
+  done
+
+  if [ $use_host_x11 ]; then
+    docker_option+=$(docker_X11_host)
+  else
+    docker_option+=$(docker_X11)
+    if ! [ $debug_mode ]; then
+        relies_on desktop
+    fi
+  fi
+
+  other_args="$@"
+}
+
 docker_mount_os(){
   echo \
     --network="${RIDE_NETWORK}" \
@@ -283,14 +309,17 @@ cheese(){
 }
 
 chrome(){
-  del_stopped chrome
+    local docker_option
+    local debug_mode
+    local other_args
+    parse_arg "$@"
+
+    if ! [ $debug_mode ]; then
+      del_stopped chrome
+    fi
 
   local config_host=$(get_app_host_config_path chrome)
 
-  # use docker vnc if not specify using host's display
-  if [[ "$1" != "host" ]]; then
-    relies_on desktop
-  fi
 
   # add flags for proxy if passed
   if [[ "$1" == "tor" ]]; then
@@ -304,7 +333,7 @@ chrome(){
     args="https://check.torproject.org/api/ip ${*:2}"
   fi
 
-  local docker_option+=" \
+  docker_option+=" \
     --security-opt seccomp:unconfined \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
@@ -317,13 +346,7 @@ chrome(){
     --name chrome \
   "
 
-  if [[ "$1" != "host" ]]; then
-    docker_option+=$(docker_X11)
-  else
-    docker_option+=$(docker_X11_host)
-  fi
-
-  docker run -d \
+  $(if_debug_mode) docker run -d \
     ${docker_option} \
     "$DOCKER_REPO_PREFIX"/chrome \
     --proxy-server="$proxy" \
@@ -1625,10 +1648,10 @@ yubico_piv_tool(){
 }
 alias yubico-piv-tool="yubico_piv_tool"
 
+# ./.dockerfunc.sh test
 if [[ "$1" = "test" ]]; then
   HOST_HOME=/home/user
   setupenv
-  # ./.dockerfunc.sh test
   function get_host_pwd {
     echo "calling: get_host_pwd $@" >> /tmp/ride.log
     echo "/home/laser/projects/ride"
@@ -1667,6 +1690,11 @@ if [[ "$1" = "test" ]]; then
 
   if ! [[ $(aws) =~ "/home/user/other:/tmp/.aws" ]]; then
     echo "TEST FAILURE: aws"
+    exit 1
+  fi
+
+  if ! [[ $(chrome --docker docker_option --host --debug chrome_arg) =~ "docker run -d docker_option" ]]; then
+    echo "TEST FAILURE: parse_arg"
     exit 1
   fi
 
