@@ -81,11 +81,11 @@ endif
     " Tabs settings
     set smarttab                    " Make <tab> and <backspace> smarter
     set expandtab
-    set tabstop=2
+    set tabstop=4
 
     " Automatic Indentation
     set autoindent smartindent
-    set shiftwidth=2
+    set shiftwidth=4
 
     " Misc
     set hidden                      " Don't abandon buffers moved to the background
