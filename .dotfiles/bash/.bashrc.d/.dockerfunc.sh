@@ -144,11 +144,18 @@ if_debug_mode() {
 #
 parse_arg(){
   local use_host_x11
+  local use_display
+  local network=${RIDE_NETWORK}
+  local user="${HOST_USER_ID}:${HOST_USER_GID}"
+
   while [[ "$#" -gt 0 ]]; do
     case $1 in
         -o|--docker) docker_option+=" $2 "; shift ;;
+        --network) network="$2"; shift ;;
+        --user) user="$2"; shift ;;
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
+        --display) use_display=0 ;;
         --debug) debug_mode=0 ;;
         --host) use_host_x11=0 ;;
         *) break ;;
@@ -156,12 +163,22 @@ parse_arg(){
     shift
   done
 
-  if [ $use_host_x11 ]; then
-    docker_option+=$(docker_X11_host)
-  else
-    docker_option+=$(docker_X11)
-    if ! [ $debug_mode ]; then
-        relies_on desktop
+  if [ "$network" != "no" ]; then
+    docker_option+=" --network=${RIDE_NETWORK} "
+  fi
+
+  if [ "$user" != "no" ]; then
+    docker_option+=" --user=${user} "
+  fi
+
+  if [ $use_display ]; then
+    if [ $use_host_x11 ]; then
+      docker_option+=$(docker_X11_host)
+    else
+      docker_option+=$(docker_X11)
+      if ! [ $debug_mode ]; then
+          relies_on desktop
+      fi
     fi
   fi
 
@@ -312,7 +329,7 @@ chrome(){
     local docker_option
     local debug_mode
     local other_args
-    parse_arg "$@"
+    parse_arg --display "$@"
 
     if ! [ $debug_mode ]; then
       del_stopped chrome
@@ -335,8 +352,6 @@ chrome(){
 
   docker_option+=" \
     --security-opt seccomp:unconfined \
-    --network="${RIDE_NETWORK}" \
-    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     --group-add audio \
     --group-add video \
     -e HOME=/home \
@@ -1651,7 +1666,11 @@ alias yubico-piv-tool="yubico_piv_tool"
 # ./.dockerfunc.sh test
 if [[ "$1" = "test" ]]; then
   HOST_HOME=/home/user
+  RIDE_NETWORK="ride_network"
+  HOST_USER_ID=1000
+  HOST_USER_GID=1000
   setupenv
+
   function get_host_pwd {
     echo "calling: get_host_pwd $@" >> /tmp/ride.log
     echo "/home/laser/projects/ride"
@@ -1695,6 +1714,18 @@ if [[ "$1" = "test" ]]; then
 
   if ! [[ $(chrome --docker docker_option --host --debug chrome_arg) =~ "docker run -d docker_option" ]]; then
     echo "TEST FAILURE: parse_arg"
+    exit 1
+  fi
+
+  if [[ $(chrome --debug --network no) =~ "network" ]]; then
+    echo "TEST FAILURE: parse_arg: network=no"
+    exit 1
+  fi
+
+  unset docker_option
+  parse_arg --user 0:0
+  if ! [[ $docker_option =~ "--user=0:0" ]]; then
+    echo "TEST FAILURE: parse_arg: user=no"
     exit 1
   fi
 
