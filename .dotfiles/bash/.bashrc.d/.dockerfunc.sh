@@ -155,7 +155,8 @@ parse_arg(){
         -o|--docker) docker_option+=" $2 "; shift ;;
         --network) network="$2"; shift ;;
         --user) user="$2"; shift ;;
-        --config) app_name="$2"; shift ;;
+        --name) app_name="$2"; shift ;;
+        --config) config_path="$2"; shift ;;
         --share) host_share_path="$2"; shift ;;
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
@@ -169,7 +170,10 @@ parse_arg(){
 
   if [ $app_name ]; then
     docker_option+=" --name=${app_name} "
-    config_host=$(get_app_host_config_path ${app_name})
+    if [ $config_path ]; then
+      local config_host=$(get_app_host_config_path ${app_name})
+      docker_option+=" -v ${config_host}:${config_path} "
+    fi
   fi
 
   if [ $host_share_path ]; then
@@ -345,8 +349,7 @@ chrome(){
     local docker_option
     local debug_mode
     local other_args
-    local config_host
-    parse_arg --display --config chrome --share /home/Downloads "$@"
+    parse_arg --display --name chrome --config /home --share /home/Downloads "$@"
 
     if ! [ $debug_mode ]; then
       del_stopped chrome
@@ -367,7 +370,6 @@ chrome(){
   docker_option+=" \
     --security-opt seccomp:unconfined \
     -e HOME=/home \
-    -v "${config_host}:/home" \
   "
 
   $(if_debug_mode) docker run -d \
@@ -507,7 +509,7 @@ firefox(){
   local debug_mode
   local config_host
   local other_args
-  parse_arg --display --config firefox --share /home/Share "$@"
+  parse_arg --display --name firefox --config /home --share /home/Share "$@"
 
   del_stopped firefox
 
@@ -515,7 +517,6 @@ firefox(){
 
   local docker_option+=" \
     -e HOME=/home \
-    -v "${config_host}:/home" \
   "
 
   $(if_debug_mode) docker run -d \
