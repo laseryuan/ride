@@ -417,8 +417,10 @@ dcos(){
 }
 
 desktop(){
-  RESOLUTION=${RESOLUTION:-"1280x720"}
-  VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
+  local RESOLUTION=${RESOLUTION:-"1280x720"}
+  local VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
+  local config_host=$(get_app_host_config_path desktop)
+
   del_stopped desktop
 
   docker run -d \
@@ -432,7 +434,7 @@ desktop(){
     --name desktop \
     $(docker_command) \
     -v "${RIDE_CONFIG}/Share":"/home/headless/Share" \
-    -v desktop_config:/home/headless/.config \
+    -v "${config_host}:/home/headless/.config" \
     -v /usr/share/fonts \
     -v /usr/lib/locale \
     -v /usr/share/zoneinfo \
