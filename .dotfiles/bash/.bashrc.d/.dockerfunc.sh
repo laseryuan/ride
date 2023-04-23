@@ -147,12 +147,16 @@ parse_arg(){
   local use_display
   local network=${RIDE_NETWORK}
   local user="${HOST_USER_ID}:${HOST_USER_GID}"
+  local app_name
+  local host_share_path
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
         -o|--docker) docker_option+=" $2 "; shift ;;
         --network) network="$2"; shift ;;
         --user) user="$2"; shift ;;
+        --config) app_name="$2"; shift ;;
+        --share) host_share_path="$2"; shift ;;
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
         --display) use_display=0 ;;
@@ -163,6 +167,15 @@ parse_arg(){
     shift
   done
 
+  if [ $app_name ]; then
+    docker_option+=" --name=${app_name} "
+    config_host=$(get_app_host_config_path ${app_name})
+  fi
+
+  if [ $host_share_path ]; then
+    docker_option+=" -v ${RIDE_CONFIG}/Share:${host_share_path} "
+  fi
+
   if [ "$network" != "no" ]; then
     docker_option+=" --network=${RIDE_NETWORK} "
   fi
@@ -172,6 +185,9 @@ parse_arg(){
   fi
 
   if [ $use_display ]; then
+    docker_option+=" -v /dev/shm:/dev/shm "
+    docker_option+=" --group-add audio --group-add video "
+
     if [ $use_host_x11 ]; then
       docker_option+=$(docker_X11_host)
     else
@@ -329,14 +345,12 @@ chrome(){
     local docker_option
     local debug_mode
     local other_args
-    parse_arg --display "$@"
+    local config_host
+    parse_arg --display --config chrome --share /home/Downloads "$@"
 
     if ! [ $debug_mode ]; then
       del_stopped chrome
     fi
-
-  local config_host=$(get_app_host_config_path chrome)
-
 
   # add flags for proxy if passed
   if [[ "$1" == "tor" ]]; then
@@ -352,20 +366,15 @@ chrome(){
 
   docker_option+=" \
     --security-opt seccomp:unconfined \
-    --group-add audio \
-    --group-add video \
     -e HOME=/home \
-    -v /dev/shm:/dev/shm \
     -v "${config_host}:/home" \
-    -v "${RIDE_CONFIG}/Share":/home/Downloads \
-    --name chrome \
   "
 
   $(if_debug_mode) docker run -d \
     ${docker_option} \
     "$DOCKER_REPO_PREFIX"/chrome \
     --proxy-server="$proxy" \
-    --host-resolver-rules="$map" "$args"
+    --host-resolver-rules="$map" "$other_args"
 }
 
 consul(){
@@ -492,27 +501,24 @@ scrcpy(){
 }
 
 firefox(){
-  local config_host=$(get_app_host_config_path firefox)
+  local docker_option
+  local debug_mode
+  local config_host
+  local other_args
+  parse_arg --display --config firefox --share /home/Share "$@"
+
   del_stopped firefox
-  relies_on desktop
 
   use-sound-device-if-exists
 
   local docker_option+=" \
-    --network="${RIDE_NETWORK}" \
-    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -e HOME=/home \
-    -v /dev/shm:/dev/shm \
     -v "${config_host}:/home" \
-    -v "${RIDE_CONFIG}/Share:/home/Share" \
-    --name firefox \
   "
 
-  docker_option+=$(docker_X11)
-
-  docker run -d \
+  $(if_debug_mode) docker run -d \
     ${docker_option} \
-    ${MY_DOCKER_REPO_PREFIX}/firefox "$@"
+    ${MY_DOCKER_REPO_PREFIX}/firefox
 }
 
 firefox_jess(){
