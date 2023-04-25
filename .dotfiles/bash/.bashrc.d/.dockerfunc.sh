@@ -149,6 +149,7 @@ parse_arg(){
   local user="${HOST_USER_ID}:${HOST_USER_GID}"
   local app_name
   local host_share_path
+  local mount_path
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -158,6 +159,7 @@ parse_arg(){
         --name) app_name="$2"; shift ;;
         --config) config_path="$2"; shift ;;
         --share) host_share_path="$2"; shift ;;
+        --mount) mount_path="$2"; shift ;;
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
         --display) use_display=0 ;;
@@ -178,6 +180,15 @@ parse_arg(){
 
   if [ $host_share_path ]; then
     docker_option+=" -v ${RIDE_CONFIG}/Share:${host_share_path} "
+  fi
+
+  if [ $mount_path ]; then
+    docker_option+=" -v $(get_host_pwd):${mount_path} "
+    docker_option+=" \
+      -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+      -e HOME=/tmp --workdir=${mount_path} \
+      -v /etc/localtime:/etc/localtime:ro \
+    "
   fi
 
   if [ "$network" != "no" ]; then
@@ -203,6 +214,14 @@ parse_arg(){
   fi
 
   other_args="$@"
+}
+
+docker_mount(){
+  local docker_option
+  local debug_mode
+  local other_args
+  parse_arg --mount /tmp/data
+
 }
 
 docker_mount_os(){
@@ -1418,21 +1437,20 @@ travis(){
 }
 
 docker_run(){
+  local docker_option
+  local debug_mode
+  local config_host
+  local other_args
+  parse_arg --mount /tmp/data "$@"
+
   del_stopped docker_run 
-  relies_on desktop
   use-sound-device-if-exists
 
-  local docker_option
-  unset debug_mode
   while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -o|--docker) docker_option+=" $2 "; shift ;;
-        -p) docker_option+=" -p $2 "; shift ;;
-        -v) docker_option+=" -v $2 "; shift ;;
         -d) docker_option+=" -d " ;;
-        -r|--reset) docker_option+=" --entrypoint= " ;;
         --rm) docker_option+=" --rm " ;;
-        --debug) debug_mode=0 ;;
+        -r|--reset) docker_option+=" --entrypoint= " ;;
         *) break ;;
     esac
     shift
@@ -1440,7 +1458,6 @@ docker_run(){
 
   $(if_debug_mode) docker run \
     -it \
-    $(docker_mount_os) \
     ${docker_option} \
     --name docker_run \
     "$@"
@@ -1735,6 +1752,14 @@ if [[ "$1" = "test" ]]; then
   parse_arg --user 0:0
   if ! [[ $docker_option =~ "--user=0:0" ]]; then
     echo "TEST FAILURE: parse_arg: user=no"
+    exit 1
+  fi
+
+  unset docker_option
+  parse_arg --mount /tmp/data
+
+  if ! [[ $(docker_run -r repo bash) =~ "repo bash" ]]; then
+    echo "TEST FAILURE: docker_run"
     exit 1
   fi
 
