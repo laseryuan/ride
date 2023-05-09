@@ -35,6 +35,13 @@ sudo /usr/sbin/sshd
 ```
 
 # Development
+dev docker functions
+```
+cd .dotfiles/bash/.bashrc.d/
+devsh
+./.dockerfunc.sh test
+```
+
 ```
 cd ~/projects/ride
 

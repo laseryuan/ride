@@ -1441,10 +1441,6 @@ docker_run(){
   local debug_mode
   local config_host
   local other_args
-  parse_arg --mount /tmp/data "$@"
-
-  del_stopped docker_run 
-  use-sound-device-if-exists
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -1456,11 +1452,16 @@ docker_run(){
     shift
   done
 
+  parse_arg --mount /tmp/data "$@"
+
+  del_stopped docker_run 
+  use-sound-device-if-exists
+
   $(if_debug_mode) docker run \
     -it \
     ${docker_option} \
     --name docker_run \
-    "$@"
+    "$other_args"
 }
 
 virsh(){
@@ -1758,6 +1759,7 @@ if [[ "$1" = "test" ]]; then
   unset docker_option
   parse_arg --mount /tmp/data
 
+  unset docker_option
   if ! [[ $(docker_run -r repo bash) =~ "repo bash" ]]; then
     echo "TEST FAILURE: docker_run"
     exit 1
