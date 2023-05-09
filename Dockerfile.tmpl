@@ -8,7 +8,9 @@ ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
 
 # Install dependency
-RUN apt-get update && apt-get install -y \
+RUN \
+  apt-get update && \
+  apt-get install -y \
     `# system` \
       sudo gosu \
       apt-transport-https \
@@ -37,6 +39,10 @@ RUN apt-get update && apt-get install -y \
       tmux \
       vim \
       ``
+
+# allow access to volume by different user to enable UIDs other than root when
+# using volumes
+RUN echo user_allow_other >> /etc/fuse.conf
 
 # Install github action cache dependency
 {{#ARCH.is_amd}}

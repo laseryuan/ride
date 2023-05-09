@@ -3,11 +3,12 @@
 
 SSH_FORWARD_PORT=12322
 WORK_SPACE=/home/ride/projects
-MOUNT_TARGET=~/sshfs
+MOUNT_TARGET=~/projects/sshfs
 
 mkdir -p ${MOUNT_TARGET}
 
 sshfs \
+  -o allow_other \
   -o auto_unmount \
   -o StrictHostKeyChecking=no \
   -p ${SSH_FORWARD_PORT} \
