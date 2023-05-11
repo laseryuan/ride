@@ -11,8 +11,9 @@ setupenv(){
   export DOCKER_REPO_PREFIX=jess
   export MY_DOCKER_REPO_PREFIX=lasery
   export RESOLUTION_S=600x1165
+  export RESOLUTION_M=1280x720
   export RESOLUTION_L=1920x1080
-   
+
   [ -z "$RIDE_USER" ] || {
     export RIDE_NETWORK=${RIDE_NETWORK:-"ride_network"}
     export DISPLAY=${DISPLAY:-"unix:1"}
@@ -447,8 +448,16 @@ desktop(){
   local debug_mode
   local other_args
 
-  local RESOLUTION=${RESOLUTION:-"1280x720"}
+  local RESOLUTION=${RESOLUTION:-"1920x1080"}
   local VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
+
+  while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -s) RESOLUTION="${RESOLUTION_M}" ;;
+        *) break ;;
+    esac
+    shift
+  done
 
   parse_arg --user no --name desktop --config /home/headless/.config \
       --share /home/headless/Share "$@"
