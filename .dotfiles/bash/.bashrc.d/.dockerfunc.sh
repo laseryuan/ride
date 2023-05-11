@@ -197,6 +197,9 @@ parse_arg(){
 
   if [ "$user" != "no" ]; then
     docker_option+=" --user=${user} "
+    docker_option+=" \
+      -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    "
   fi
 
   if [ $use_display ]; then
@@ -247,7 +250,9 @@ docker_locale(){
     -e GTK_IM_MODULE=ibus \
     -e QT_IM_MODULE=ibus \
     -e LANG="en_US.UTF-8" \
-    -e LC_CTYPE="zh_CN.UTF-8"
+    -e LC_CTYPE="zh_CN.UTF-8" \
+    -v /etc/localtime:/etc/localtime:ro \
+    -e TZ=Asia/Hong_Kong
 }
 
 docker_X11(){
@@ -438,24 +443,27 @@ dcos(){
 }
 
 desktop(){
+  local docker_option
+  local debug_mode
+  local other_args
+
   local RESOLUTION=${RESOLUTION:-"1280x720"}
   local VNC_PASSWORD=${VNC_PASSWORD:-"ride"}
-  local config_host=$(get_app_host_config_path desktop)
+
+  parse_arg --user no --name desktop --config /home/headless/.config \
+      --share /home/headless/Share "$@"
 
   del_stopped desktop
 
-  docker run -d \
-    --network="${RIDE_NETWORK}" \
+  $(if_debug_mode) docker run -d \
+    ${docker_option} \
+    $(docker_command) \
     --privileged \
     --ipc=shareable \
     -e VNC_RESOLUTION="${RESOLUTION}" \
     -e VNC_PW="${VNC_PASSWORD}" \
     -e VNC_PORT=5900 \
-    -u "${HOST_USER_ID}:${HOST_USER_GID}" \
-    --name desktop \
-    $(docker_command) \
-    -v "${RIDE_CONFIG}/Share":"/home/headless/Share" \
-    -v "${config_host}:/home/headless/.config" \
+    -u "${HOST_USER_ID}":"${HOST_USER_GID}" \
     -v /usr/share/fonts \
     -v /usr/lib/locale \
     -v /usr/share/zoneinfo \

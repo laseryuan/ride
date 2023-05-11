@@ -118,6 +118,7 @@ create-ride() {
     `# environment virable`\
     -e DISPLAY \
     -e TERM \
+    -e TZ=Asia/Hong_Kong \
     -e HOST_pwd=$(pwd) \
     -e HOST_HOME=$HOME \
     -e HOST_NAME=`get-host-name` \
