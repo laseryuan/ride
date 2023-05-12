@@ -51,7 +51,7 @@ debug-mode() {
 docker-option-mount-projects() {
   if [ "$1" != "sshyou" ]; then
     echo \
-      --mount type=bind,src=$(pwd),dst="${mount_path}",bind-propagation=rshared \
+      --mount type=bind,src=$(pwd),dst="${mount_path}" \
       --workdir="${mount_path}"
   fi
 }
