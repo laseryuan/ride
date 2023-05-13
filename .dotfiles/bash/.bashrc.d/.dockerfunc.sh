@@ -185,11 +185,7 @@ parse_arg(){
 
   if [ $mount_path ]; then
     docker_option+=" -v $(get_host_pwd):${mount_path} "
-    docker_option+=" \
-      -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-      -e HOME=/tmp --workdir=${mount_path} \
-      -v /etc/localtime:/etc/localtime:ro \
-    "
+    docker_option+=" -e HOME=/tmp --workdir=${mount_path} "
   fi
 
   if [ "$network" != "no" ]; then
@@ -206,6 +202,8 @@ parse_arg(){
   if [ $use_display ]; then
     docker_option+=" -v /dev/shm:/dev/shm "
     docker_option+=" --group-add audio --group-add video "
+    docker_option+=" -v /etc/localtime:/etc/localtime:ro "
+    docker_option+=" -e TZ=Asia/Hong_Kong "
 
     if [ $use_host_x11 ]; then
       docker_option+=$(docker_X11_host)
@@ -251,9 +249,7 @@ docker_locale(){
     -e GTK_IM_MODULE=ibus \
     -e QT_IM_MODULE=ibus \
     -e LANG="en_US.UTF-8" \
-    -e LC_CTYPE="zh_CN.UTF-8" \
-    -v /etc/localtime:/etc/localtime:ro \
-    -e TZ=Asia/Hong_Kong
+    -e LC_CTYPE="zh_CN.UTF-8"
 }
 
 docker_X11(){
@@ -1785,3 +1781,32 @@ if [[ "$1" = "test" ]]; then
 
   echo TESTS succeed!
 fi
+
+  # debugger "$@"
+  # echo $docker_option
+  # echo "$@"
+      # echo $user
+  # echo $app_name
+  # echo $host_share_path
+  # echo $config_host
+  # echo $config_path
+  # echo $mount_path
+  # echo $network
+  # echo \
+    # -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+    # [ $debug_control ] && echo "$@"
+  # [ $debug_control ] && debugger "$#"
+  # echo "$#"
+  # echo "$@"
+  # echo "$1"
+  # echo "$2"
+  # echo "$mount_path"
+
+  # debugger "$@"
+  # echo $other_args
+  # [ $debug_control ] && debugger "$@"
+  # echo $other_args
+  # echo "$@"
+  # debug_control=0
+  # debugger "$@"
+  # docker_run --debug
