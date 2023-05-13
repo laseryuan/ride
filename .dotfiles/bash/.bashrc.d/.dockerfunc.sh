@@ -1474,11 +1474,12 @@ docker_run(){
   del_stopped docker_run 
   use-sound-device-if-exists
 
+  set -- $other_args
   $(if_debug_mode) docker run \
     -it \
     ${docker_option} \
     --name docker_run \
-    "$other_args"
+    "$@"
 }
 
 virsh(){
