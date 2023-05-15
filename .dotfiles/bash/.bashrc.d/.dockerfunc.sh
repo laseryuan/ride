@@ -200,10 +200,10 @@ parse_arg(){
   fi
 
   if [ $use_display ]; then
-    docker_option+=" -v /dev/shm:/dev/shm "
     docker_option+=" --group-add audio --group-add video "
     docker_option+=" -v /etc/localtime:/etc/localtime:ro "
     docker_option+=" -e TZ=Asia/Hong_Kong "
+    docker_option+=" -e GDK_SCALE -e GDK_DPI_SCALE "
 
     if [ $use_host_x11 ]; then
       docker_option+=$(docker_X11_host)
@@ -229,7 +229,6 @@ docker_mount(){
 docker_mount_os(){
   echo \
     --network="${RIDE_NETWORK}" \
-    -v /dev/shm:/dev/shm \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
     -v "$(get_host_pwd)":/tmp/data -e HOME=/tmp --workdir=/tmp/data \
@@ -257,17 +256,16 @@ docker_X11(){
     --ipc=container:desktop \
     -e DISPLAY=unix:1 --volumes-from desktop \
     -e PULSE_SERVER=pulseaudio \
-    -e GDK_SCALE -e GDK_DPI_SCALE \
     $(docker_locale)
 }
 
 docker_X11_host(){
   echo \
+    -v /dev/shm:/dev/shm \
     -v /usr/share/fonts:/usr/share/fonts \
     -v /usr/lib/locale:/usr/lib/locale \
     -v /usr/share/zoneinfo:/usr/share/zoneinfo \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -e GDK_SCALE -e GDK_DPI_SCALE \
     $(docker_locale)
 }
 #
@@ -464,6 +462,7 @@ desktop(){
     ${docker_option} \
     $(docker_command) \
     --privileged \
+    --shm-size=1g \
     --ipc=shareable \
     -e VNC_RESOLUTION="${RESOLUTION}" \
     -e VNC_PW="${VNC_PASSWORD}" \
