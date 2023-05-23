@@ -163,6 +163,7 @@ parse_arg(){
         --mount) mount_path="$2"; shift ;;
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
+        --dc) docker_option+=" $(docker_command) " ;;
         --display) use_display=0 ;;
         --debug) debug_mode=0 ;;
         --host) use_host_x11=0 ;;
@@ -230,6 +231,7 @@ docker_mount_os(){
 docker_command(){
   echo \
     -v "$(command -v docker):/usr/bin/docker" \
+    -v "$(command -v docker-compose)":/usr/local/bin/docker-compose \
     -v /var/run/docker.sock:/var/run/docker.sock \
     --group-add "$HOST_DOCKER_ID"
 }
