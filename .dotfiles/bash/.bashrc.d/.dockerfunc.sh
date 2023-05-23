@@ -218,14 +218,6 @@ parse_arg(){
   other_args="$@"
 }
 
-docker_mount(){
-  local docker_option
-  local debug_mode
-  local other_args
-  parse_arg --mount /tmp/data
-
-}
-
 docker_mount_os(){
   echo \
     --network="${RIDE_NETWORK}" \
