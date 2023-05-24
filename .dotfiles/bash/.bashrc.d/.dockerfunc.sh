@@ -146,6 +146,7 @@ if_debug_mode() {
 parse_arg(){
   local use_host_x11
   local use_display
+  local use_docker
   local network=${RIDE_NETWORK}
   local user="${HOST_USER_ID}:${HOST_USER_GID}"
   local app_name
@@ -163,7 +164,7 @@ parse_arg(){
         --mount) mount_path="$2"; shift ;;
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
-        --dc) docker_option+=" $(docker_command) " ;;
+        --dc) use_docker=0 ;;
         --display) use_display=0 ;;
         --debug) debug_mode=0 ;;
         --host) use_host_x11=0 ;;
@@ -171,6 +172,12 @@ parse_arg(){
     esac
     shift
   done
+
+  if [ "$user" != "no" ]; then
+    DOCKERAPP_HOME="/tmp"
+    docker_option+=" --user=${user} -e HOME=/tmp "
+    docker_option+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro "
+  fi
 
   if [ $app_name ]; then
     docker_option+=" --name=${app_name} "
@@ -186,16 +193,11 @@ parse_arg(){
 
   if [ $mount_path ]; then
     docker_option+=" -v $(get_host_pwd):${mount_path} "
-    docker_option+=" -e HOME=/tmp --workdir=${mount_path} "
+    docker_option+=" --workdir=${mount_path} "
   fi
 
   if [ "$network" != "no" ]; then
     docker_option+=" --network=${RIDE_NETWORK} "
-  fi
-
-  if [ "$user" != "no" ]; then
-    docker_option+=" --user=${user} "
-    docker_option+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro "
   fi
 
   if [ $use_display ]; then
@@ -214,6 +216,10 @@ parse_arg(){
     fi
   fi
 
+  if [ $use_docker ]; then
+    docker_option+=" $(docker_command) "
+  fi
+
   other_args="$@"
 }
 
@@ -229,8 +235,9 @@ docker_mount_os(){
 docker_command(){
   echo \
     -v "$(command -v docker):/usr/bin/docker" \
-    -v "$(command -v docker-compose)":/usr/local/bin/docker-compose \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "$HOST_HOME/.docker/":"$DOCKERAPP_HOME/.docker/" \
+    -v "$(command -v docker-compose)":/usr/local/bin/docker-compose \
     --group-add "$HOST_DOCKER_ID"
 }
 
@@ -594,11 +601,6 @@ gcloud(){
   local config_host
   local other_args
 
-  docker run --rm -it \
-    `docker_mount_os` \
-    -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
-    -v "${config_host}":/tmp/.config/gcloud \
-    --name dgcloud \
   parse_arg --name gcloud --config /tmp/.config/gcloud --mount /tmp/data "$@"
   docker_option+=" -e CLOUDSDK_CONFIG=/tmp/.config/gcloud "
   [ -z "${other_args}" ] && { set -- bash; } || set -- gcloud "${other_args}"
@@ -1464,16 +1466,14 @@ docker_run(){
     shift
   done
 
-  parse_arg --mount /tmp/data "$@"
+  parse_arg --name docker_run --mount /tmp/data "$@"
 
   del_stopped docker_run 
   use-sound-device-if-exists
 
   set -- $other_args
-  $(if_debug_mode) docker run \
-    -it \
+  $(if_debug_mode) docker run -it \
     ${docker_option} \
-    --name docker_run \
     "$@"
 }
 
