@@ -195,9 +195,7 @@ parse_arg(){
 
   if [ "$user" != "no" ]; then
     docker_option+=" --user=${user} "
-    docker_option+=" \
-      -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-    "
+    docker_option+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro "
   fi
 
   if [ $use_display ]; then
@@ -591,16 +589,24 @@ gcalcli(){
 }
 
 gcloud(){
-  del_stopped dgcloud
-  local config_host=$(get_app_host_config_path gcloud)
+  local docker_option
+  local debug_mode
+  local config_host
+  local other_args
 
   docker run --rm -it \
     `docker_mount_os` \
     -e CLOUDSDK_CONFIG=/tmp/.config/gcloud \
     -v "${config_host}":/tmp/.config/gcloud \
     --name dgcloud \
+  parse_arg --name gcloud --config /tmp/.config/gcloud --mount /tmp/data "$@"
+  docker_option+=" -e CLOUDSDK_CONFIG=/tmp/.config/gcloud "
+  [ -z "${other_args}" ] && { set -- bash; } || set -- gcloud "${other_args}"
+  del_stopped gcloud
+  $(if_debug_mode) docker run -it --rm \
+    ${docker_option} \
     google/cloud-sdk \
-    bash
+    "$@"
 }
 
 gimp(){
