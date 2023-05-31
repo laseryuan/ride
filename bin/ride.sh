@@ -143,7 +143,7 @@ create-ride() {
     \
     `# docker in docker`\
     -e HOST_DOCKER_ID=`get-docker-group-id` \
-    -v `get-folder "$HOME/.docker"`:/home/ride/.docker \
+    -v `get-folder "$HOME/.docker/"`:/home/ride/.docker/ \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "$(command -v docker-compose)":/usr/local/bin/docker-compose \
     $(add-host-ip) \

@@ -234,7 +234,7 @@ docker_mount_os(){
 
 docker_command(){
   echo \
-    -v "$(command -v docker):/usr/bin/docker" \
+    -v "$(command -v docker)":/usr/bin/docker \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "$HOST_HOME/.docker/":"$DOCKERAPP_HOME/.docker/" \
     -v "$(command -v docker-compose)":/usr/local/bin/docker-compose \
@@ -1779,6 +1779,11 @@ if [[ "$1" = "test" ]]; then
   fi
 
   echo TESTS succeed!
+
+  # unset docker_option
+  # gcloud --debug help
+  # gcloud
+  # gcloud --dc
 fi
 
   # debugger "$@"
