@@ -1,7 +1,7 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.14.29"
+IMAGE_VERSION: "0.14.30"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
 
@@ -17,12 +17,12 @@ ARCH:
   is_arm32: true
   # enable: false
 
-- name: armv7l
+- name: armv7
   images:
     base: balenalib/raspberry-pi-debian:buster
-  tag: armv7l
+  tag: armv7
   arch: arm
-  variant: v7l
+  variant: v7
   platform: linux/arm/v7
   is_arm: true
   is_arm32: true
