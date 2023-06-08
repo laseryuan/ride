@@ -507,12 +507,21 @@ devsh(){
 }
 
 devpy(){
-  local docker_option+=`docker_mount_os`
+    local docker_option
+    local debug_mode
+    local config_host
+    local other_args
 
-  docker run --rm -it \
+    parse_arg --name devpy --mount /tmp/data "$@"
+
+    if ! [ $debug_mode ]; then
+      del_stopped devpy
+    fi
+
+    $(if_debug_mode) docker run -it \
       ${docker_option} \
-      ${MY_DOCKER_REPO_PREFIX}/python \
-      bash
+      ${MY_DOCKER_REPO_PREFIX}/devpy \
+      bash -l
 }
 
 scrcpy(){
@@ -1722,7 +1731,7 @@ if [[ "$1" = "test" ]]; then
     return
   }
 
-  if [[ $(devpy) != "calling: docker run --rm -it lasery/python bash" ]]; then
+  if ! [[ $(devpy) =~ .*lasery/devpy ]]; then
     echo "TEST FAILURE: devpy"
     exit 1
   fi
