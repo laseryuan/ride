@@ -197,7 +197,7 @@ parse_arg(){
   fi
 
   if [ "$network" != "no" ]; then
-    docker_option+=" --network=${RIDE_NETWORK} "
+    docker_option+=" --network=${network} "
   fi
 
   if [ $use_display ]; then
