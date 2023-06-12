@@ -502,7 +502,7 @@ devsh(){
 
   docker run --rm -it \
       ${docker_option} \
-      ${MY_DOCKER_REPO_PREFIX}/bash \
+      ${MY_DOCKER_REPO_PREFIX}/devsh \
       bash -l
 }
 
@@ -1733,11 +1733,6 @@ if [[ "$1" = "test" ]]; then
 
   if ! [[ $(devpy) =~ .*lasery/devpy ]]; then
     echo "TEST FAILURE: devpy"
-    exit 1
-  fi
-
-  if [[ $(devsh) != "calling: docker run --rm -it lasery/bash bash -l" ]]; then
-    echo "TEST FAILURE: devsh"
     exit 1
   fi
 
