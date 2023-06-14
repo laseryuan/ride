@@ -497,31 +497,36 @@ desktop_dorowu(){
     ${MY_DOCKER_REPO_PREFIX}/vnc-desktop
 }
 
-devsh(){
-  local docker_option+=`docker_mount_os`
+devlang(){
+    local lang="$1"
 
-  docker run --rm -it \
-      ${docker_option} \
-      ${MY_DOCKER_REPO_PREFIX}/devsh \
-      bash -l
-}
-
-devpy(){
     local docker_option
     local debug_mode
     local config_host
     local other_args
 
-    parse_arg --name devpy --mount /tmp/data "$@"
+    parse_arg --name "dev$lang" --mount /tmp/data "$@"
 
     if ! [ $debug_mode ]; then
-      del_stopped devpy
+      del_stopped "dev$lang"
     fi
 
     $(if_debug_mode) docker run -it \
       ${docker_option} \
-      ${MY_DOCKER_REPO_PREFIX}/devpy \
+      ${MY_DOCKER_REPO_PREFIX}/"dev$lang" \
       bash -l
+}
+
+devcpp(){
+    devlang cpp
+}
+
+devsh(){
+    devlang sh
+}
+
+devpy(){
+    devlang py
 }
 
 scrcpy(){
@@ -1784,9 +1789,9 @@ if [[ "$1" = "test" ]]; then
 
   echo TESTS succeed!
 
-  # unset docker_option
+  unset docker_option
+  # devcpp
   # gcloud --debug help
-  # gcloud
   # gcloud --dc
 fi
 
