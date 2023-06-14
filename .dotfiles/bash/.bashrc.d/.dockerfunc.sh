@@ -155,15 +155,15 @@ parse_arg(){
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -o|--docker) docker_option+=" $2 "; shift ;;
+        -p) docker_option+=" -p $2 "; shift ;;
+        -v) docker_option+=" -v $2 "; shift ;;
+        --docker) docker_option+=" $2 "; shift ;;
         --network) network="$2"; shift ;;
         --user) user="$2"; shift ;;
         --name) app_name="$2"; shift ;;
         --config) config_path="$2"; shift ;;
         --share) host_share_path="$2"; shift ;;
         --mount) mount_path="$2"; shift ;;
-        -p) docker_option+=" -p $2 "; shift ;;
-        -v) docker_option+=" -v $2 "; shift ;;
         --dc) use_docker=0 ;;
         --display) use_display=0 ;;
         --debug) debug_mode=0 ;;

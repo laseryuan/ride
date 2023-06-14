@@ -13,10 +13,10 @@ main() {
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --mount) mount_flag=0 ;;
         -L|--local) ssh_option+=" -L $2 "; shift ;;
         -R|--remote) ssh_option+=" -R $2 "; shift ;;
-        -o|--ssh) ssh_option+=" $2 "; shift ;;
+        --ssh) ssh_option+=" $2 "; shift ;;
+        --mount) mount_flag=0 ;;
         --debug) is_debug_mode=0 ;;
         *) break ;;
     esac
