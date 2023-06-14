@@ -1,6 +1,4 @@
-{{#ARCH.is_arm}}
 FROM lasery/krypton as builder
-{{/ARCH.is_arm}}
 
 FROM {{ARCH.images.base}}
 
@@ -15,6 +13,7 @@ RUN \
       sudo gosu \
       apt-transport-https \
       ca-certificates \
+      gnupg \
       locales \
     `# help` \
       man \
@@ -22,16 +21,14 @@ RUN \
       openssh-server \
       sshfs \
     `# python` \
-      python3-pip \
+      python3-venv \
     `# network tools` \
       curl \
       iputils-ping \
       iproute2 \
-      netcat \
+      netcat-openbsd socat \
     `# source control` \
       git \
-      cryptsetup \
-      git-crypt \
     `# dotfiles` \
       stow \
     `# editor` \
@@ -50,14 +47,20 @@ RUN apt install zstd
 {{/ARCH.is_amd}}
 
 ## Install mbuild dependency
-RUN pip3 install \
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Run the application:
+RUN pip install \
       `# mbuild dependency`\
       chevron pyyaml argparse \
       `# python codebench depencency`\
-      ipdb pytest pytest-mock behave \
+      pytest pytest-mock \
       ``
 
 # Install krypton
+COPY --from=builder /usr/bin/kr /usr/bin/krd /usr/bin/krssh /usr/bin/krgpg /usr/bin/
 {{#ARCH.is_amd}}
 RUN curl https://krypt.co/kr | sh
 {{/ARCH.is_amd}}
@@ -141,6 +144,7 @@ COPY --chown=ride bin/ /usr/local/bin/
 # Tests
 COPY test.sh /test.sh
 RUN bash -e /test.sh
+RUN kr --version
 
 USER root
 ENV HOME /home/ride
