@@ -1,25 +1,25 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.14.33"
+IMAGE_VERSION: "0.14.34"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
 
 ARCH:
 - name: armv6l
   images:
-    base: balenalib/raspberry-pi-debian:buster
+    base: balenalib/raspberry-pi-debian:latest
   tag: armv6l
   arch: arm
   variant: v6l
   platform: linux/arm/v6
   is_arm: true
   is_arm32: true
-  # enable: false
+  enable: false
 
 - name: armv7
   images:
-    base: balenalib/raspberry-pi-debian:buster
+    base: balenalib/raspberry-pi-debian:latest
   tag: armv7
   arch: arm
   variant: v7
@@ -30,7 +30,7 @@ ARCH:
 
 - name: amd64
   images:
-    base: debian:bullseye
+    base: debian:latest
   tag: amd64
   arch: amd64
   platform: linux/amd64
@@ -39,7 +39,7 @@ ARCH:
 
 - name: arm64
   images:
-    base: debian:bullseye
+    base: debian:latest
   tag: arm64
   arch: arm64
   platform: linux/arm64
