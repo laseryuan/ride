@@ -1,7 +1,7 @@
 ---
 REPO: ride
 STAGE: false
-IMAGE_VERSION: "0.14.34"
+IMAGE_VERSION: "0.14.35"
 GIT_NAME: "Laser Yuan"
 GIT_EMAIL: "laser.yuan@gmail.com"
 
@@ -15,7 +15,7 @@ ARCH:
   platform: linux/arm/v6
   is_arm: true
   is_arm32: true
-  enable: false
+  # enable: false
 
 - name: armv7
   images:
@@ -30,7 +30,7 @@ ARCH:
 
 - name: amd64
   images:
-    base: debian:latest
+    base: debian:oldstable
   tag: amd64
   arch: amd64
   platform: linux/amd64

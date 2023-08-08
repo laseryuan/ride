@@ -62,6 +62,15 @@ RUN pip install \
 # Install krypton
 COPY --from=builder /usr/bin/kr /usr/bin/krd /usr/bin/krssh /usr/bin/krgpg /usr/bin/
 
+{{#ARCH.is_amd}}
+# Install akamai krypton
+RUN \
+    curl -SsL https://akamai.github.io/akr-pkg/ubuntu/KEY.gpg | apt-key add - && \
+    curl -SsL -o /etc/apt/sources.list.d/akr.list https://akamai.github.io/akr-pkg/ubuntu/akr.list && \
+    apt-get update && \
+    apt-get install -y akr pinentry-tty
+{{/ARCH.is_amd}}
+
 # Install docker client
 RUN apt-get install -yq lsb-release
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -119,7 +128,7 @@ RUN set -ex; \
 
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
-RUN mkdir projects .ssh .kr && \
+RUN mkdir projects .ssh .kr .akr && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ tmux bash ssh && \

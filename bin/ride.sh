@@ -134,6 +134,7 @@ create-ride() {
     `# persist ssh config on host`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
     -v `get-folder "$HOME/.kr"`:/home/ride/.kr \
+    -v `get-folder "$HOME/.akr"`:/home/ride/.akr \
     \
     `# git`\
     $(use-gitconfig-if-exists) \
