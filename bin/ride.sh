@@ -81,11 +81,17 @@ get-docker-group-id() {
 }
 
 add-host-ip() {
-  if  ( ifconfig docker0 | head -1 | grep UP ) > /dev/null 2>& 1
-  then
-    local address=`ifconfig docker0 | grep 'inet' | cut -d: -f2 | awk '{print $2}'`
-    echo "--add-host $(get-host-name):${address}"
+  local interface="docker0"
+
+  local detail
+  if command -v ip > /dev/null; then
+    detail=$(ip addr show "$interface")
+  else
+    detail=$(ifconfig "$interface")
   fi
+  local ip_address=$(echo "$detail" | awk '/inet / {print $2}' | cut -d '/' -f 1)
+
+  echo "--add-host $(get-host-name):${ip_address}"
 }
 
 get-host-name() {
