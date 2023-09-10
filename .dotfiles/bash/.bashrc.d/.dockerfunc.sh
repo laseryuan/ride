@@ -237,7 +237,6 @@ docker_command(){
     -v "$(command -v docker)":/usr/bin/docker \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "$HOST_HOME/.docker/":"$DOCKERAPP_HOME/.docker/" \
-    -v "$(command -v docker-compose)":/usr/local/bin/docker-compose \
     --group-add "$HOST_DOCKER_ID"
 }
 
