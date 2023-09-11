@@ -60,7 +60,7 @@ RUN pip install \
       ``
 
 # Install krypton
-COPY --from=builder /usr/bin/kr /usr/bin/krd /usr/bin/krssh /usr/bin/krgpg /usr/bin/
+COPY --from=builder /usr/bin/kr /usr/bin/krd /usr/bin/krssh /usr/bin/krgpg /usr/local/bin/
 
 {{#ARCH.is_amd}}
 # Install akamai krypton
