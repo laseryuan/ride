@@ -81,6 +81,10 @@ get-docker-group-id() {
 }
 
 add-host-ip() {
+  if [ `get-os` = "Mac" ]; then
+    return
+  fi
+
   local interface="docker0"
 
   local detail
