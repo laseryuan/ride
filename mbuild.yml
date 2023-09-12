@@ -39,7 +39,7 @@ ARCH:
 
 - name: arm64
   images:
-    base: debian:latest
+    base: debian:oldstable
   tag: arm64
   arch: arm64
   platform: linux/arm64
