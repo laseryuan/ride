@@ -108,6 +108,10 @@
         Plugin 'tpope/vim-endwise'
     " }
 
+    " fastfold: Speed up Vim by updating folds only when called-for.
+        Plugin 'Konfekt/FastFold'
+    " }
+
     " fubitive: Add Bitbucket URL support to fugitive.vim's :Gbrowse command {
         Plugin 'tommcdo/vim-fubitive'
     " }
