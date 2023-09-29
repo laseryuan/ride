@@ -1479,14 +1479,19 @@ docker_run(){
     shift
   done
 
-  parse_arg --name docker_run --mount /tmp/data "$@"
+  parse_arg --mount /tmp/data "$@"
 
   del_stopped docker_run 
   use-sound-device-if-exists
 
   set -- $other_args
+  local image_name=$(echo "$1" | sed 's/\//-/g')
+  shift
+  parse_arg --name docker_run-$image_name
+  [ -z "$@" ] && { set -- bash; }
   $(if_debug_mode) docker run -it \
     ${docker_option} \
+    "$image_name" \
     "$@"
 }
 
@@ -1783,6 +1788,10 @@ if [[ "$1" = "test" ]]; then
   unset docker_option
   if ! [[ $(docker_run -r repo bash) =~ "repo bash" ]]; then
     echo "TEST FAILURE: docker_run"
+    exit 1
+  fi
+  if ! [[ $(docker_run -r my/repo bash) =~ "--name=docker_run-my-repo" ]]; then
+    echo "TEST FAILURE: invalid container name"
     exit 1
   fi
 
