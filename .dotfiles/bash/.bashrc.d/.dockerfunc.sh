@@ -1463,6 +1463,11 @@ travis(){
     ${DOCKER_REPO_PREFIX}/travis "$@"
 }
 
+get_container_name_from_image_name(){
+  local image_name="$1"
+  container_name=docker_run-$(echo "$image_name" | sed 's/\//-/g')
+}
+
 docker_run(){
   local docker_option
   local debug_mode
@@ -1479,16 +1484,19 @@ docker_run(){
     shift
   done
 
-  parse_arg --mount /tmp/data "$@"
+  parse_arg "$@"
 
-  del_stopped docker_run 
-  use-sound-device-if-exists
+  local container_name
+  get_container_name_from_image_name $other_args
 
-  set -- $other_args
-  local image_name=$(echo "$1" | sed 's/\//-/g')
+  unset docker_option
+  parse_arg --name $container_name --mount /tmp/data $@
+
+  local image_name="$1"
   shift
-  parse_arg --name docker_run-$image_name
   [ -z "$@" ] && { set -- bash; }
+
+  del_stopped ${container_name}
   $(if_debug_mode) docker run -it \
     ${docker_option} \
     "$image_name" \
@@ -1786,11 +1794,12 @@ if [[ "$1" = "test" ]]; then
   parse_arg --mount /tmp/data
 
   unset docker_option
-  if ! [[ $(docker_run -r repo bash) =~ "repo bash" ]]; then
+  if ! [[ $(docker_run -r repo) =~ "repo bash" ]]; then
     echo "TEST FAILURE: docker_run"
     exit 1
   fi
-  if ! [[ $(docker_run -r my/repo bash) =~ "--name=docker_run-my-repo" ]]; then
+
+  if ! [[ $(docker_run -r my/repo run) =~ "--name=docker_run-my-repo" ]]; then
     echo "TEST FAILURE: invalid container name"
     exit 1
   fi
@@ -1798,36 +1807,8 @@ if [[ "$1" = "test" ]]; then
   echo TESTS succeed!
 
   unset docker_option
-  # devcpp
-  # gcloud --debug help
-  # gcloud --dc
 fi
 
   # debugger "$@"
-  # echo $docker_option
-  # echo "$@"
-      # echo $user
-  # echo $app_name
-  # echo $host_share_path
-  # echo $config_host
-  # echo $config_path
-  # echo $mount_path
-  # echo $network
-  # echo \
-    # -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-    # [ $debug_control ] && echo "$@"
-  # [ $debug_control ] && debugger "$#"
-  # echo "$#"
-  # echo "$@"
-  # echo "$1"
-  # echo "$2"
-  # echo "$mount_path"
-
-  # debugger "$@"
-  # echo $other_args
-  # [ $debug_control ] && debugger "$@"
-  # echo $other_args
-  # echo "$@"
   # debug_control=0
-  # debugger "$@"
-  # docker_run --debug
+  # [ $debug_control ] && echo "$@"
