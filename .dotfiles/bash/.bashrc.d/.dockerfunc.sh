@@ -26,13 +26,13 @@ setupenv(){
 setupenv
 
 loadenv () {
-  if [[ -f ".env.sh" ]]; then
+  if [[ -f "env.sh" ]]; then
     # Show env vars
-    grep -v '^#' .env.sh
+    grep -v '^#' env.sh
 
     # Export env vars
     set -o allexport
-    source .env.sh
+    source env.sh
     set +o allexport
   fi
 }
