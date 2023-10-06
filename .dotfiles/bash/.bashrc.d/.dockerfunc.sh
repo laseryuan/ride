@@ -157,6 +157,9 @@ parse_arg(){
     case $1 in
         -p) docker_option+=" -p $2 "; shift ;;
         -v) docker_option+=" -v $2 "; shift ;;
+        -d) docker_option+=" -d " ;;
+        --rm) docker_option+=" --rm " ;;
+        -r|--reset) docker_option+=" --entrypoint= " ;;
         --docker) docker_option+=" $2 "; shift ;;
         --network) network="$2"; shift ;;
         --user) user="$2"; shift ;;
@@ -614,7 +617,7 @@ gcloud(){
   local config_host
   local other_args
 
-  parse_arg --name gcloud --config /tmp/.config/gcloud --mount /tmp/data "$@"
+  parse_arg --name gcloud --dc --config /tmp/.config/gcloud --mount /tmp/data "$@"
   docker_option+=" -e CLOUDSDK_CONFIG=/tmp/.config/gcloud "
   [ -z "${other_args}" ] && { set -- bash; } || set -- gcloud "${other_args}"
   del_stopped gcloud
@@ -1474,24 +1477,13 @@ docker_run(){
   local config_host
   local other_args
 
-  while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        -d) docker_option+=" -d " ;;
-        --rm) docker_option+=" --rm " ;;
-        -r|--reset) docker_option+=" --entrypoint= " ;;
-        *) break ;;
-    esac
-    shift
-  done
-
   parse_arg "$@"
-
   local container_name
   get_container_name_from_image_name $other_args
-
   unset docker_option
-  parse_arg --name $container_name --mount /tmp/data $@
 
+  parse_arg --name $container_name --mount /tmp/data $@
+  set -- $other_args
   local image_name="$1"
   shift
   [ -z "$@" ] && { set -- bash; }
@@ -1811,4 +1803,4 @@ fi
 
   # debugger "$@"
   # debug_control=0
-  # [ $debug_control ] && echo "$@"
+  # [ $debug_control ] && debugger "$@"
