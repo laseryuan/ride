@@ -115,7 +115,13 @@
     noremap K k
 
     " Avoid open command-line window accidentally
-    " nnoremap q: :q
+    nnoremap q: :q
+" }}}
+
+" Exit  {{{
+    " Quick exit vim
+    :map <Right><C-d> <Esc><Esc>:wqa<CR>
+    :map! <Right><C-d> <Esc><Esc>:wqa<CR>
 " }}}
 
 " End of mappings.vim

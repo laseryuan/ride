@@ -27,12 +27,25 @@ set viminfo=%100,'100,/100,h,\"500,:1000,n~/.vim/viminfo
 " for an explanation and other ctags tips/tricks
 set tags+=tags;$HOME
 
-" Undo
-set undolevels=10000
-if has("persistent_undo")
-  set undodir=~/.vim/undo       " Allow undoes to persist even after a file is closed
-  set undofile
-endif
+" Undo file {
+    set undolevels=10000
+    if has("persistent_undo")
+      " set undodir=~/.vim/undo       " Allow undoes to persist even after a file is closed
+      " set undofile
+
+        " define a path to store persistent undo files.
+        let target_path = expand('~/.ride/vim/undo')
+        " create the directory and any parent directories
+        " if the location does not exist.
+        if !isdirectory(target_path)
+            call system('mkdir -p ' . target_path)
+        endif
+        " point Vim to the defined undo directory.
+        let &undodir = target_path
+        " finally, enable undo persistence.
+        set undofile
+    endif
+" }
 
 " Copy & Paste {{{
     set pastetoggle=<F2>
@@ -92,12 +105,23 @@ endif
     set wildmenu                    " Enhanced completion hints in command line
     set wildmode=list:longest,full  " Complete longest common match and show possible matches and wildmenu
     set complete=.,w,b,u,U,t,i,d    " Do lots of scanning on tab completion
+" }
+
+" Swap file {
     set updatecount=100             " Write swap file to disk every 100 chars
-    set directory=~/.vim/swap       " Directory to use for the swap file
+
+    " define a path to store persistent swap files.
+    let target_path = expand('~/.ride/vim/swap')
+    " create the directory and any parent directories
+    " if the location does not exist.
+    if !isdirectory(target_path)
+        call system('mkdir -p ' . target_path)
+    endif
+    set directory=~/.ride/vim/swap       " Directory to use for the swap file
     set history=1000                " Remember 1000 commands
     set scrolloff=3                 " Start scrolling 3 lines before the horizontal window border
     set visualbell t_vb=            " Disable error bells
-    set shortmess+=A                " Always edit file, even when swap file is found
+    " set shortmess+=A                " Always edit file, even when swap file is found
 " }
 
 " Programming Settings {
