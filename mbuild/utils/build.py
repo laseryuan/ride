@@ -39,7 +39,7 @@ class Builder:
 
     def build_dockerfile(self, arch_data):
         if_build = self.get_build_file()
-        dockerfile_tmpl_path = f'Dockerfile{if_build}.tmpl'
+        dockerfile_tmpl_path = f'tmpl.Dockerfile{if_build}'
         dockerfile_path = self.output_dir + f'{arch_data["ARCH"]["name"]}/Dockerfile{if_build}'
         with open(dockerfile_tmpl_path, 'r') as f:
             dockerfile = chevron.render(f, arch_data)

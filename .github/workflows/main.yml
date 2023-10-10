@@ -8,7 +8,7 @@ jobs:
   my_job:
     runs-on: ubuntu-latest
     container:
-      image: lasery/ride:0.14.28
+      image: lasery/ride
       options: >-
         -v "/home/runner/work/ride/ride":"/home/ride/projects/ride"
         -e HOST_NAME=${{ github.event.repository.name }}
