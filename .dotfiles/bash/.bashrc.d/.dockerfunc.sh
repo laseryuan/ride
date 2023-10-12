@@ -211,6 +211,7 @@ parse_arg(){
 
     if [ $use_host_x11 ]; then
       docker_option+=$(docker_X11_host)
+      docker_option+=$(docker_pulseaudio_host)
     else
       docker_option+=$(docker_X11)
       if ! [ $debug_mode ]; then
@@ -261,7 +262,7 @@ docker_X11(){
 }
 
 docker_X11_host(){
-  echo \
+  echo ' ' \
     -v /dev/shm:/dev/shm \
     -v /usr/share/fonts:/usr/share/fonts \
     -v /usr/lib/locale:/usr/lib/locale \
@@ -269,6 +270,13 @@ docker_X11_host(){
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     $(docker_locale)
 }
+
+docker_pulseaudio_host(){
+    echo ' ' \
+        -v /run/user/$HOST_USER_ID/pulse:/run/user/$HOST_USER_ID/pulse \
+        -e PULSE_SERVER=/run/user/$HOST_USER_ID/pulse/native
+}
+
 #
 # Container Aliases
 #
