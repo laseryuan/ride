@@ -401,7 +401,7 @@ chrome(){
     -e HOME=/home \
   "
 
-  $(if_debug_mode) docker run -d \
+  $(if_debug_mode) docker run -d --rm \
     ${docker_option} \
     "$DOCKER_REPO_PREFIX"/chrome \
     --proxy-server="$proxy" \
@@ -1477,7 +1477,7 @@ travis(){
 
 get_container_name_from_image_name(){
   local image_name="$1"
-  container_name=docker_run-$(echo "$image_name" | sed 's/\//-/g')
+  container_name=docker_run-$(echo "$image_name" | sed 's/[/:]/-/g')
 }
 
 docker_run(){
@@ -1774,7 +1774,7 @@ if [[ "$1" = "test" ]]; then
     exit 1
   fi
 
-  if ! [[ $(chrome --docker docker_option --host --debug chrome_arg) =~ "docker run -d docker_option" ]]; then
+  if ! [[ $(chrome --docker docker_option --host --debug chrome_arg) =~ "docker run -d --rm docker_option" ]]; then
     echo "TEST FAILURE: parse_arg"
     exit 1
   fi
