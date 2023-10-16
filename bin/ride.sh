@@ -102,6 +102,10 @@ get-host-name() {
   hostname | cut -c -10
 }
 
+get-host-timezone() {
+    readlink /etc/localtime | awk -F'/' '{print $(NF-1)"/"$(NF)}'
+}
+
 create-ride() {
   local docker_option
   while [[ "$#" -gt 0 ]]; do
@@ -128,7 +132,7 @@ create-ride() {
     `# environment virable`\
     -e DISPLAY \
     -e TERM \
-    -e TZ=Asia/Hong_Kong \
+    -e TZ=$(get-host-timezone) \
     -e HOST_pwd=$(pwd) \
     -e HOST_HOME=$HOME \
     -e HOST_NAME=`get-host-name` \

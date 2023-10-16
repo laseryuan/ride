@@ -180,6 +180,7 @@ parse_arg(){
     DOCKERAPP_HOME="/tmp"
     docker_option+=" --user=${user} -e HOME=/tmp "
     docker_option+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro "
+    docker_option+=" -e TZ=${TZ} "
   fi
 
   if [ $app_name ]; then
