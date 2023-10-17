@@ -1,1 +1,1 @@
-map <buffer> <Leader>pry oeval(locus);<ESC>:w<CR>
+map <buffer> <Leader>pry oeval(require('locus'));<ESC>:w<CR>
