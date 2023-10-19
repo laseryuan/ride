@@ -207,7 +207,6 @@ parse_arg(){
   if [ $use_display ]; then
     docker_option+=" --group-add audio --group-add video "
     docker_option+=" -v /etc/localtime:/etc/localtime:ro "
-    docker_option+=" -e TZ=Asia/Hong_Kong "
     docker_option+=" -e GDK_SCALE -e GDK_DPI_SCALE "
 
     if [ $use_host_x11 ]; then
