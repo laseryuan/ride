@@ -121,7 +121,7 @@ set tags+=tags;$HOME
     set history=1000                " Remember 1000 commands
     set scrolloff=3                 " Start scrolling 3 lines before the horizontal window border
     set visualbell t_vb=            " Disable error bells
-    " set shortmess+=A                " Always edit file, even when swap file is found
+    set shortmess+=A                " Always edit file, even when swap file is found
 " }
 
 " Programming Settings {
