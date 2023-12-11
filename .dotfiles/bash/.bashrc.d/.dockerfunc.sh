@@ -539,6 +539,10 @@ devpy(){
     devlang py
 }
 
+devjs(){
+    devlang js
+}
+
 scrcpy(){
   local config_host=$(get_app_host_config_path android)
   del_stopped scrcpy
