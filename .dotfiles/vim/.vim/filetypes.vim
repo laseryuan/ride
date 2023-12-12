@@ -17,7 +17,7 @@ augroup filetypedetect
   au! BufRead,BufNewFile *.txt      setfiletype rst
   au! BufRead,BufNewFile *.md       setfiletype markdown
   au! BufRead,BufNewFile *.wiki     setfiletype moin
-  "au! BufNewFile,BufRead *.wiki     setfiletype Wikipedia
+  au! BufRead,BufNewFile *.log      setfiletype messages
 augroup END
 
 " to_html settings
