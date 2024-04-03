@@ -29,6 +29,17 @@ get-mount-path() {
   echo "$ret"
 }
 
+map-user() {
+  # No need to remap user for Mac https://www.joyfulbikeshedding.com/blog/2021-03-15-docker-and-the-host-filesystem-owner-matching-problem.html
+  if [ `get-os` = "Mac" ]; then
+    echo \
+      --env HOST_USER_NAME=$(id -u -n) --env HOST_USER_ID=1000 --env HOST_USER_GID=1000
+  else
+    echo \
+      --env HOST_USER_NAME=$(id -u -n) --env HOST_USER_ID=$(id -u) --env HOST_USER_GID=$(id -g)
+  fi
+}
+
 use-gitconfig-if-exists() {
   if [[ -f "$HOME/.gitconfig" ]]; then
     echo \
@@ -143,7 +154,7 @@ create-ride() {
     -v `get-folder "$HOME/.ride"`:/home/ride/.ride \
     \
     `# as host user`\
-    -e HOST_USER_NAME=$(id -u -n) -e HOST_USER_ID=$(id -u) -e HOST_USER_GID=$(id -g) \
+    $(map-user) \
     \
     `# persist ssh config on host`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
