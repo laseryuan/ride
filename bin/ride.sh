@@ -92,21 +92,25 @@ get-docker-group-id() {
 }
 
 add-host-ip() {
-  if [ `get-os` = "Mac" ]; then
-    return
-  fi
+  echo "--add-host $(get-host-name):host-gateway"
 
-  local interface="docker0"
+  # local ip_address
 
-  local detail
-  if command -v ip > /dev/null; then
-    detail=$(ip addr show "$interface")
-  else
-    detail=$(ifconfig "$interface")
-  fi
-  local ip_address=$(echo "$detail" | awk '/inet / {print $2}' | cut -d '/' -f 1)
+  # if [ `get-os` = "Mac" ]; then
+      # echo "--add-host $(get-host-name):host-gateway"
+  # else
+      # local interface="docker0"
 
-  echo "--add-host $(get-host-name):${ip_address}"
+      # local detail
+      # if command -v ip > /dev/null; then
+        # detail=$(ip addr show "$interface")
+      # else
+        # detail=$(ifconfig "$interface")
+      # fi
+      # ip_address=$(echo "$detail" | awk '/inet / {print $2}' | cut -d '/' -f 1)
+
+      # echo "--add-host $(get-host-name):${ip_address}"
+  # fi
 }
 
 get-host-name() {
