@@ -72,7 +72,7 @@ get-ride-name() {
 }
 
 get-os() {
-  unameOut="$( docker run --rm -ti alpine uname -s )"
+  unameOut="$( docker run --rm -it alpine uname -s )" 
   case "${unameOut}" in
       Linux*)     machine=Linux;;
       Darwin*)    machine=Mac;;
@@ -87,8 +87,16 @@ get-docker-group-id() {
   if [ `get-os` = "Mac" ]; then
     echo
   else
-    echo `sed -nr "s/^docker:.*:([0-9]+):.*/\1/p" /etc/group`
+    # mount socket file from host machine and get group id of this file.
+    # the host machine is the machine running docker daemon, so it's not necessary
+    # the local machine
+    docker run --rm -i -v /var/run/docker.sock:/tmp/docker.sock alpine stat -c %g /tmp/docker.sock
+    # echo `sed -nr "s/^docker:.*:([0-9]+):.*/\1/p" /etc/group`
   fi
+}
+
+get-docker-socket() {
+  docker context inspect --format '{{.Endpoints.docker.Host}}' | sed 's/^unix:\/\///'
 }
 
 add-host-ip() {
@@ -173,7 +181,7 @@ create-ride() {
     `# docker in docker`\
     -e HOST_DOCKER_ID=`get-docker-group-id` \
     -v `get-folder "$HOME/.docker/"`:/home/ride/.docker/ \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /var/run/docker.sock:"$(get-docker-socket)" \
     $(add-host-ip) \
     \
     lasery/ride \
