@@ -72,7 +72,7 @@ get-ride-name() {
 }
 
 get-os() {
-  unameOut="$(uname -s)"
+  unameOut="$( docker run --rm -ti alpine uname -s )"
   case "${unameOut}" in
       Linux*)     machine=Linux;;
       Darwin*)    machine=Mac;;
