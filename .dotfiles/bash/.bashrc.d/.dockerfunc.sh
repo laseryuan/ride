@@ -236,10 +236,14 @@ docker_mount_os(){
     -v /etc/localtime:/etc/localtime:ro
 }
 
+get-docker-socket() {
+  docker context inspect --format '{{.Endpoints.docker.Host}}' | sed 's/^unix:\/\///'
+}
+
 docker_command(){
   echo \
     -v "$(command -v docker)":/usr/bin/docker \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /var/run/docker.sock:"$(get-docker-socket)" \
     -v "$HOST_HOME/.docker/":"$DOCKERAPP_HOME/.docker/" \
     --group-add "$HOST_DOCKER_ID"
 }
