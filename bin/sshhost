@@ -1,3 +1,36 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-ssh "$HOST_USER_NAME@$HOST_NAME"
+if_debug() {
+  [ $is_debug_mode ] && {
+    echo "echo"
+  }
+}
+
+get_host_name() {
+    if getent hosts host.docker.internal > /dev/null; then
+        host_name=host.docker.internal
+    else
+        host_name=$HOST_NAME
+    fi
+}
+
+main() {
+    local is_debug_mode
+    local host_name
+    echo $1
+
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            --debug) is_debug_mode=0 ;;
+            *) break ;;
+        esac
+        shift
+    done
+
+    get_host_name
+
+    $(if_debug) ssh \
+        "$HOST_USER_NAME"@"$host_name"
+}
+
+main "$@"
