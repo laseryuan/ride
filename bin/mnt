@@ -1,15 +1,51 @@
-#!/bin/sh
-# mount files from sshme server
+#!/usr/bin/env bash
+# mount sshme server or sshyou client's projects folder to current ride
+# ~/projects/mnt directory
 
-SSH_FORWARD_PORT=12322
-WORK_SPACE=/home/ride/projects
-MOUNT_TARGET=~/projects/sshfs
+if_debug() {
+  [ $is_debug_mode ] && {
+    echo "echo"
+  }
+}
 
-mkdir -p ${MOUNT_TARGET}
+check_mountable() {
+    echo Check if /dev/fuse exists
+    if [[ -e /dev/fuse ]]; then
+        echo "FUSE device is present."
+    else
+        echo '>>> Ride is not mountable. Run ride in priviledged mode: ride -o "--privileged".'
+        exit 1
+    fi
+}
 
-sshfs \
-  -o allow_other \
-  -o auto_unmount \
-  -o StrictHostKeyChecking=no \
-  -p ${SSH_FORWARD_PORT} \
-  ride@localhost:${WORK_SPACE} ${MOUNT_TARGET}
+main() {
+    check_mountable
+
+    local SSH_FORWARD_PORT=12322
+    local WORK_SPACE=~/projects
+    local MOUNT_TARGET=~/projects/mnt
+
+    local is_debug_mode
+
+    while [[ "$#" -gt 0 ]]; do
+      case $1 in
+          --ssh) ssh_option+=" $2 "; shift ;;
+          --debug) is_debug_mode=0 ;;
+          *) break ;;
+      esac
+      shift
+    done
+
+    mkdir -p ${MOUNT_TARGET}
+
+    $(if_debug) sshfs \
+      -o allow_other \
+      -o auto_unmount \
+      -o StrictHostKeyChecking=no \
+      -p ${SSH_FORWARD_PORT} \
+      ride@localhost:${WORK_SPACE} ${MOUNT_TARGET}
+
+    echo "run: 'ln -sf ~/projects/mnt tmp/projects' to link to current directory"
+}
+
+main "$@"
