@@ -64,7 +64,7 @@ class Builder:
 
     def docker(self):
         ret = os.system(
-          "docker buildx bake -f " + self.output_dir + "docker-bake.hcl " + self.bake_args
+          "BUILDX_BAKE_ENTITLEMENTS_FS=0 docker buildx bake -f " + self.output_dir + "docker-bake.hcl " + self.bake_args
           )
         if ret != 0:
             sys.exit(1)
