@@ -6,13 +6,16 @@
 # * Starts SSHD with default Authorized Keys File fetched from github.com
 # * Test Functionality:
 
+#!/bin/bash
+
 main() {
-  local will_restart mount_flag
+  local will_restart mount_flag key_name
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -r|--restart) will_restart=1 ;;
         --mount) mount_flag=1 ;;
+        --key) key_name="$2"; shift ;;
         *) break ;;
     esac
     shift
@@ -40,7 +43,9 @@ main() {
       exit 1
     fi
 
-    curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys || {
+    key_source="https://github.com/${key_name:-laseryuan}.keys"
+    echo "Fetching authorized keys from: $key_source"
+    curl -sSL -o /tmp/authorized_keys "$key_source" || {
       echo "Failed to download authorized_keys file" >&2
       exit 1
     }
@@ -64,7 +69,7 @@ test() {
     echo "Mock sudo: $@"
   }
 
-  if ! [[ $(main --restart --mount) =~ "Stopping sshd" ]]; then
+  if ! [[ $(main --restart --mount --key testuser) =~ "Stopping sshd" ]]; then
     echo "TEST FAILURE: --restart did not trigger sshd stop"
     exit 1
   fi

@@ -1,11 +1,32 @@
 #!/bin/bash
 
-if [[ "$1" == "mount" ]]; then
-  mount_flag=--mount
-  shift
-fi
+# The bash script file bin/sshme below has features:
+# * It works with sshstart:
+#
+# Please add this features:
+# * can load key from github by given option --key name
+#
+#  bin/sshstart:
+#  {{bin/sshstart}}
+#
 
-sshstart $mount_flag
+#  bin/sshme:
+
+#!/bin/bash
+
+mount_flag=""
+key_option=""
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    mount) mount_flag="--mount" ;;
+    --key) key_option="--key $2"; shift ;;
+    *) break ;;
+  esac
+  shift
+done
+
+sshstart $mount_flag $key_option
 
 first=$1
 first=${first:-@sish}
@@ -28,3 +49,4 @@ SSH_SERVER=${after:-sish}
 
 # connect to sish server as target
 ssh -o StrictHostKeyChecking=no -p 22222 -R "$SSH_USER":22:localhost:22 $SSH_SERVER.unsown.top
+
