@@ -1,43 +1,52 @@
 #!/bin/bash
 
+# The bash script file bin/sshstart below has features:
+# * -r or --restart: If provided, it stops sshd before starting it again.
+# * --mount: If the mount flag is not provided, it modifies the keys file to force users into an existing tmux session.
+# * Starts SSHD with default Authorized Keys File fetched from github.com
+# * Test Functionality:
+
 main() {
-  local will_restart
+  local will_restart mount_flag
 
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        -r|--restart) will_restart=0 ;;
+    case "$1" in
+        -r|--restart) will_restart=1 ;;
+        --mount) mount_flag=1 ;;
         *) break ;;
     esac
     shift
   done
 
-  if [[ "$1" == "mount" ]]; then
-    mount_flag=mount
-    shift
+  if [[ -n "$will_restart" ]]; then
+    if pgrep -x "sshd" >/dev/null; then
+      echo "Stopping sshd..."
+      sudo killall sshd || echo "Failed to stop sshd. It may not be running."
+    fi
   fi
 
-  [ $will_restart ] && {
-    if pgrep -x "sshd" >/dev/null
-    then
-      echo "stopping sshd"
-      sudo killall sshd
-    fi
-  }
-
-  if pgrep -x "sshd" >/dev/null
-  then
-    echo "sshd already is running"
+  if pgrep -x "sshd" >/dev/null; then
+    echo "SSHD is already running."
   else
-    echo "start sshd server"
-    # build authorized_key
+    echo "Starting SSHD server..."
+
     if [[ $EUID -ne 0 ]]; then
       sudo chown ride:ride /tmp
     fi
     chmod 755 /tmp
 
-    curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys
-    if [[ "$mount_flag" != "mount" ]]; then
-      echo "force user tmux a"
+    if ! command -v curl &>/dev/null; then
+      echo "Error: curl is required but not installed." >&2
+      exit 1
+    fi
+
+    curl -sSL -o /tmp/authorized_keys https://github.com/laseryuan.keys || {
+      echo "Failed to download authorized_keys file" >&2
+      exit 1
+    }
+
+    if [[ -z "$mount_flag" ]]; then
+      echo "Forcing user into tmux session..."
       sed -i -e 's/^/command="tmux a" /' /tmp/authorized_keys
     fi
     chmod 600 /tmp/authorized_keys
@@ -46,24 +55,25 @@ main() {
   fi
 }
 
-test (){
+test() {
   function pgrep {
+    echo "Mock pgrep: sshd detected"
     return 0
-    echo "calling: ssh $@"
   }
   function sudo {
-    echo "calling: sudo $@"
+    echo "Mock sudo: $@"
   }
 
-  if ! [[ $(main --restart mount ) =~ "stopping sshd" ]]; then
-    echo "TEST FAILURE: --restart"
+  if ! [[ $(main --restart --mount) =~ "Stopping sshd" ]]; then
+    echo "TEST FAILURE: --restart did not trigger sshd stop"
     exit 1
   fi
-  echo test succeed!
+  echo "Test succeeded!"
 }
 
-if [[ "$1" = "test" ]]; then
+if [[ "$1" == "test" ]]; then
   test "$@"
 else
   main "$@"
 fi
+
