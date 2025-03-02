@@ -46,7 +46,7 @@ main() {
   $(if_debug) ssh \
     -L 0.0.0.0:5900:desktop:5900 \
     -L 0.0.0.0:${SSH_FORWARD_PORT}:localhost:22 \
-    -J sish.unsown.top:2222 \
+    -J sish.unsown.top:22222 \
     ${ssh_option} \
     ${USER}@${SSHME_SERVER}
 }
@@ -59,7 +59,7 @@ test (){
     echo "calling: sshstart $@"
   }
 
-  if [[ $(main -L :3000:localhost:3000 ride@shell) != "calling: ssh -L 0.0.0.0:5900:desktop:5900 -L 0.0.0.0:12322:localhost:22 -J sish.unsown.top:2222 -L :3000:localhost:3000 ride@shell" ]]; then
+  if [[ $(main -L :3000:localhost:3000 ride@shell) != "calling: ssh -L 0.0.0.0:5900:desktop:5900 -L 0.0.0.0:12322:localhost:22 -J sish.unsown.top:22222 -L :3000:localhost:3000 ride@shell" ]]; then
     echo "TEST FAILURE: -L"
     exit 1
   fi
@@ -68,7 +68,7 @@ test (){
   if ! [[ 
     $res =~ "calling: sshstart --restart mount"
       &&
-    $res =~ "calling: ssh -L 0.0.0.0:5900:desktop:5900 -L 0.0.0.0:12322:localhost:22 -J sish.unsown.top:2222 -R 12322:localhost:22 ride@shell"
+    $res =~ "calling: ssh -L 0.0.0.0:5900:desktop:5900 -L 0.0.0.0:12322:localhost:22 -J sish.unsown.top:22222 -R 12322:localhost:22 ride@shell"
     ]]; then
     echo "TEST FAILURE: --mount"
     exit 1
