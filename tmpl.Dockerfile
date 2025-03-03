@@ -35,6 +35,7 @@ RUN \
       ack-grep \
       tmux \
       vim \
+      neovim \
       ``
 
 # allow access to volume by different user to enable UIDs other than root when

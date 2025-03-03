@@ -172,6 +172,9 @@ create-ride() {
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
     -v `get-folder "$HOME/.akr"`:/home/ride/.akr \
     \
+    `# persist neovim on host`\
+    -v `get-folder "$HOME/.config/nvim"`:/home/ride/.config/nvim \
+    \
     `# git`\
     $(use-gitconfig-if-exists) \
     \
