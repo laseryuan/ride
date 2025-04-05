@@ -35,7 +35,6 @@ RUN \
       ack-grep \
       tmux \
       vim \
-      neovim \
       ``
 
 # allow access to volume by different user to enable UIDs other than root when
@@ -65,12 +64,27 @@ COPY --from=builder /usr/bin/kr /usr/bin/krd /usr/bin/krssh /usr/bin/krgpg /usr/
 
 {{#ARCH.is_amd}}
 # Install akamai krypton
+# RUN \
+    # curl -SsL https://akamai.github.io/akr-pkg/ubuntu/KEY.gpg | apt-key add - && \
+    # curl -SsL -o /etc/apt/sources.list.d/akr.list https://akamai.github.io/akr-pkg/ubuntu/akr.list && \
+    # apt-get update && \
+    # apt-get install -y akr pinentry-tty
+
+# Install neovim
 RUN \
-    curl -SsL https://akamai.github.io/akr-pkg/ubuntu/KEY.gpg | apt-key add - && \
-    curl -SsL -o /etc/apt/sources.list.d/akr.list https://akamai.github.io/akr-pkg/ubuntu/akr.list && \
-    apt-get update && \
-    apt-get install -y akr pinentry-tty
+    curl -L https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz -o /tmp/nvim.tar.gz && \
+    tar -C /opt -xzf /tmp/nvim.tar.gz
+ENV PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 {{/ARCH.is_amd}}
+
+{{#ARCH.is_arm64}}
+# Install neovim
+RUN \
+    curl -L https://github.com/neovim/neovim/releases/latest/download/nvim-linux-arm64.tar.gz -o /tmp/nvim.tar.gz && \
+    tar -C /opt -xzf /tmp/nvim.tar.gz
+
+ENV PATH="$PATH:/opt/nvim-linux-arm64/bin"
+{{/ARCH.is_arm64}}
 
 # Install docker client
 RUN apt-get install -yq lsb-release
