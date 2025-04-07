@@ -153,6 +153,7 @@ RUN chmod 600 .dotfiles/ssh/.ssh/config
 
 # mbuild
 COPY --chown=ride mbuild /home/ride/mbuild
+RUN chmod 1777 /home/ride/mbuild
 COPY --chown=ride tmpl.Dockerfile /home/ride/
 COPY --chown=ride mbuild.yml /home/ride/
 
