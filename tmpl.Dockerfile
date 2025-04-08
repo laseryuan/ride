@@ -36,6 +36,10 @@ RUN \
       tmux \
       vim \
       ``
+    # {{#ARCH.is_arm32}}
+    # `# chiff dependency` \
+      # python3-dev libffi-dev libxml2-dev libxslt1-dev gcc-arm-linux-gnueabihf \
+    # {{/ARCH.is_arm32}}
 
 # allow access to volume by different user to enable UIDs other than root when
 # using volumes
@@ -57,6 +61,8 @@ RUN pip install \
       chevron pyyaml argparse \
       `# python codebench depencency`\
       pytest pytest-mock \
+      `# others`\
+      chiff \
       ``
 
 # Install krypton
@@ -144,7 +150,7 @@ RUN set -ex; \
 
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
-RUN mkdir projects .ssh .kr .akr && \
+RUN mkdir projects .ssh .kr .akr .config && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ tmux bash ssh && \

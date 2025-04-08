@@ -171,6 +171,7 @@ create-ride() {
     `# persist ssh config on host`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
     -v `get-folder "$HOME/.akr"`:/home/ride/.akr \
+    -v `get-folder "$HOME/.config"`:/home/ride/.config \
     \
     `# persist neovim on host`\
     -v `get-folder "$HOME/.config/nvim"`:/home/ride/.config/nvim \
