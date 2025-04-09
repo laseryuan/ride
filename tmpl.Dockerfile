@@ -150,7 +150,7 @@ RUN set -ex; \
 
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
-RUN mkdir projects .ssh .kr .akr .config && \
+RUN mkdir -p projects .ssh .kr .akr .config/chiff && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ tmux bash ssh && \
