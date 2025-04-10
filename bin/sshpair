@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+mkdir -p ~/.ride/chiff
+
+echo "Remove exsiting session"
+rm -f ~/.config/chiff/session
+rm -f ~/.ride/chiff/session
+
+echo "Start pairing"
+chiff pair
+
+echo "Create symbolic session"
+mv ~/.config/chiff/session ~/.ride/chiff/session
+ln -sf ~/.ride/chiff/session ~/.config/chiff/session 
+
+echo "Check chiff status"
+chiff status
+
+echo "Test chiff usage"
+pkill -f chiffd
+chiffd &
+sleep 2
+ssh -T git@github.com
