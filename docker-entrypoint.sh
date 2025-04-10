@@ -31,6 +31,8 @@ main() {
         ${CHANGE_USER} sshstart
       }
 
+      ${CHANGE_USER} config-home.sh
+
       start_tmux
 
       [ -n "$1" ] && { 
