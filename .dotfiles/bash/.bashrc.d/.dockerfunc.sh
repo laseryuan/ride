@@ -224,7 +224,7 @@ parse_arg(){
     docker_option+=" $(docker_command) "
   fi
 
-  other_args="$@"
+  other_args=("$@")
 }
 
 docker_mount_os(){
@@ -635,7 +635,7 @@ gcloud(){
 
   parse_arg --name gcloud --dc --config /tmp/.config/gcloud --mount /tmp/data "$@"
   docker_option+=" -e CLOUDSDK_CONFIG=/tmp/.config/gcloud "
-  [ -z "${other_args}" ] && { set -- bash; } || set -- gcloud "${other_args}"
+  [ -z "${other_args}" ] && { set -- bash; } || set -- gcloud "${other_args[@]}"
   del_stopped gcloud
   $(if_debug_mode) docker run -it --rm \
     ${docker_option} \
@@ -1138,6 +1138,23 @@ rainbowstream(){
     --name rainbowstream \
     ${DOCKER_REPO_PREFIX}/rainbowstream
 }
+
+rclone(){
+  local docker_option
+  local debug_mode
+  local config_host
+  local other_args
+
+  parse_arg --name rclone --dc --config /config/rclone --mount /tmp/data "$@"
+  docker_option+=" --entrypoint= "
+  [ -z "${other_args}" ] && { set -- sh; } || set -- rclone "${other_args[@]}"
+  del_stopped rclone
+  $(if_debug_mode) docker run -it --rm \
+    ${docker_option} \
+    rclone/rclone \
+    "$@"
+}
+
 registrator(){
   del_stopped registrator
 
