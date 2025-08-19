@@ -150,6 +150,8 @@ create-ride() {
   $(debug-mode) docker run \
     -it --rm \
     --name=`get-ride-name` \
+    `# avoid accident detach ride`\
+    --detach-keys="ctrl-z,q" \
     `# network`\
     --network ride_network \
     `# environment virable`\
