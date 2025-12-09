@@ -285,7 +285,12 @@ docker_pulseaudio_host(){
 # Container Aliases
 #
 
-alias yt='docker run --rm -u $(id -u):$(id -g) -v $PWD:/data vimagick/youtube-dl'
+alias yt='docker run \
+                  --rm -i \
+                  -e PGID=$(id -g) \
+                  -e PUID=$(id -u) \
+                  -v "$(pwd)":/workdir:rw \
+                  ghcr.io/mikenye/docker-youtube-dl:latest'
 # alias mustache='docker run -v `pwd`:/data --rm coolersport/mustache'
 
 adobe(){
