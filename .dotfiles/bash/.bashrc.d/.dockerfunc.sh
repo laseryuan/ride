@@ -285,12 +285,6 @@ docker_pulseaudio_host(){
 # Container Aliases
 #
 
-alias yt='docker run \
-                  --rm -i \
-                  -e PGID=$(id -g) \
-                  -e PUID=$(id -u) \
-                  -v "$(pwd)":/workdir:rw \
-                  ghcr.io/mikenye/docker-youtube-dl:latest'
 # alias mustache='docker run -v `pwd`:/data --rm coolersport/mustache'
 
 adobe(){
@@ -1758,6 +1752,21 @@ yubico_piv_tool(){
     ${DOCKER_REPO_PREFIX}/yubico-piv-tool bash
 }
 alias yubico-piv-tool="yubico_piv_tool"
+
+yt-dlp(){
+  local docker_option
+  local debug_mode
+  local config_host
+  local other_args
+
+  parse_arg --name yt_dlp -r --dc --config /tmp/.config/yt-dlp --mount /tmp/data "$@"
+  [ -z "${other_args}" ] && { set -- bash; } || set -- yt-dlp "${other_args[@]}"
+  del_stopped yt_dlp
+  $(if_debug_mode) docker run -it --rm \
+    ${docker_option} \
+    ghcr.io/mikenye/docker-youtube-dl \
+    "$@"
+}
 
 # ./.dockerfunc.sh test
 if [[ "$1" = "test" ]]; then
