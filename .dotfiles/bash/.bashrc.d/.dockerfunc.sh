@@ -449,6 +449,7 @@ clasp(){
   local other_args
 
   parse_arg --name clasp -r --dc --config /tmp/.config/clasp --mount /tmp/data "$@"
+  docker_option+=" -e HOME=/tmp/.config/clasp "
   [ -z "${other_args}" ] && { set -- sh; } || set -- clasp "${other_args[@]}"
   del_stopped clasp
   $(if_debug_mode) docker run -it --rm \
