@@ -441,6 +441,22 @@ consul(){
   hostess add consul "$(docker inspect --format '{{.NetworkSettings.Networks.bridge.IPAddress}}' consul)"
   browser-exec "http://consul:8500"
 }
+
+clasp(){
+  local docker_option
+  local debug_mode
+  local config_host
+  local other_args
+
+  parse_arg --name clasp -r --dc --config /tmp/.config/clasp --mount /tmp/data "$@"
+  [ -z "${other_args}" ] && { set -- sh; } || set -- clasp "${other_args[@]}"
+  del_stopped clasp
+  $(if_debug_mode) docker run -it --rm \
+    ${docker_option} \
+    lasery/clasp \
+    "$@"
+}
+
 dcos(){
   docker run -it --rm \
     -v "${HOME}/.dcos:/root/.dcos" \
