@@ -177,8 +177,8 @@ parse_arg(){
   done
 
   if [ "$user" != "no" ]; then
-    DOCKERAPP_HOME="/tmp"
-    docker_option+=" --user=${user} -e HOME=/tmp "
+    DOCKERAPP_HOME="/mnt"
+    docker_option+=" --user=${user} -e HOME=/mnt "
     docker_option+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro "
     docker_option+=" -e TZ=${TZ} "
   fi
@@ -232,7 +232,7 @@ docker_mount_os(){
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
     -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
-    -v "$(get_host_pwd)":/tmp/data -e HOME=/tmp --workdir=/tmp/data \
+    -v "$(get_host_pwd)":/tmp/data -e HOME=/mnt --workdir=/tmp/data \
     -v /etc/localtime:/etc/localtime:ro
 }
 
@@ -448,8 +448,8 @@ clasp(){
   local config_host
   local other_args
 
-  parse_arg --name clasp -r --dc --config /tmp/.config/clasp --mount /tmp/data "$@"
-  docker_option+=" -e HOME=/tmp/.config/clasp "
+  parse_arg --name clasp -r --dc --config /mnt/.config/clasp --mount /mnt/data "$@"
+  docker_option+=" -e HOME=/mnt/.config/clasp "
   [ -z "${other_args}" ] && { set -- sh; } || set -- clasp "${other_args[@]}"
   del_stopped clasp
   $(if_debug_mode) docker run -it --rm \
@@ -649,8 +649,8 @@ gcloud(){
   local config_host
   local other_args
 
-  parse_arg --name gcloud --dc --config /tmp/.config/gcloud --mount /tmp/data "$@"
-  docker_option+=" -e CLOUDSDK_CONFIG=/tmp/.config/gcloud "
+  parse_arg --name gcloud --dc --config /mnt/.config/gcloud --mount /mnt/data "$@"
+  docker_option+=" -e CLOUDSDK_CONFIG=/mnt/.config/gcloud "
   [ -z "${other_args}" ] && { set -- bash; } || set -- gcloud "${other_args[@]}"
   del_stopped gcloud
   $(if_debug_mode) docker run -it --rm \
@@ -1135,7 +1135,7 @@ pulseaudio(){
   docker run -d \
     --network="${RIDE_NETWORK}" \
     -u "${HOST_USER_ID}:${HOST_USER_GID}" \
-    -e HOME=/tmp \
+    -e HOME=/mnt \
     -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
     -p 4713:4713 \
     --restart unless-stopped \
@@ -1776,7 +1776,7 @@ yt-dlp(){
   local config_host
   local other_args
 
-  parse_arg --name yt_dlp -r --dc --config /tmp/.config/yt-dlp --mount /tmp/data "$@"
+  parse_arg --name yt_dlp -r --dc --config /mnt/.config/yt-dlp --mount /mnt/data "$@"
   [ -z "${other_args}" ] && { set -- bash; } || set -- yt-dlp "${other_args[@]}"
   del_stopped yt_dlp
   $(if_debug_mode) docker run -it --rm \
@@ -1847,7 +1847,7 @@ if [[ "$1" = "test" ]]; then
   fi
 
   unset docker_option
-  parse_arg --mount /tmp/data
+  parse_arg --mount /mnt/data
 
   unset docker_option
   if ! [[ $(docker_run -r repo) =~ "repo bash" ]]; then
