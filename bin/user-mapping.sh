@@ -13,12 +13,12 @@ if [ -z "${HOST_USER_ID}" -a -z "${HOST_USER_GID}" ]; then
 fi
 
 # if host user id is the same as ride  we do not need to do anything
-if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000} ]]; then
+if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000 ]]; then
     # echo "Ride has the Same user id as host." >> /tmp/ride.log
     exit 0
 fi
 
-if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
+if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0 ]]; then
   echo "Changing root home directory ..."
   sed -i -e '/root/s!\(.*:\).*:\(.*\)!\1/home/ride:\2!' /etc/passwd
   chown -R root:root /home/ride/.ssh
