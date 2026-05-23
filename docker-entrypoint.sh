@@ -21,13 +21,13 @@ main() {
       enable-docker.sh
       user-mapping.sh
 
-      if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0} ]]; then
+      if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0 ]]; then
         CHANGE_USER=""
       else
         CHANGE_USER="gosu ride"
       fi
 
-      [ ${SSH_MODE} ] && {
+      [ -n "${SSH_MODE}" ] && {
         ${CHANGE_USER} sshstart
       }
 
