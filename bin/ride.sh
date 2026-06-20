@@ -154,6 +154,8 @@ create-ride() {
     --detach-keys="ctrl-p,ctrl-z" \
     `# network`\
     --network ride_network \
+    `# memery cache folder`\
+    --tmpfs /cache \
     `# environment virable`\
     -e DISPLAY \
     -e TERM \
