@@ -146,7 +146,8 @@ RUN \
 
 RUN set -ex; \
     git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
-    vim -u NONE -S ~/.vim/vundle.vim -S ~/.vim/plugins.vim +PluginInstall +qall;
+    vim -u NONE -S ~/.vim/plugins.vim +PluginInstall +qall; \
+    nvim --headless -u ~/.config/nvim/init.vim +PluginInstall +qall;
 
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
