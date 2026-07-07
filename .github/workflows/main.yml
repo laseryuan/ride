@@ -1,4 +1,11 @@
-on: [push]
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - '**'
+      - '!.github/workflows/main.yml'
 
 env:
   REPO: ${{ github.event.repository.name }}
