@@ -3,16 +3,14 @@
 
 # credit: https://gist.github.com/renzok/29c9e5744f1dffa392cf
 
-ensure_neovim_dirs() {
+ensure_neovim_ride_dirs() {
   local owner_id="$1"
   local group_id="$2"
 
   mkdir -p \
-    /home/ride/.dotfiles/nvim/.local/share/nvim \
     /home/ride/.ride/cache/nvim \
     /home/ride/.ride/state/nvim
   chown -R "${owner_id}:${group_id}" \
-    /home/ride/.dotfiles/nvim/.local/share/nvim \
     /home/ride/.ride/cache \
     /home/ride/.ride/state
 }
@@ -28,7 +26,7 @@ fi
 
 # if host user id is the same as ride  we do not need to do anything
 if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000 ]]; then
-    ensure_neovim_dirs "${HOST_USER_ID:-1000}" "${HOST_USER_GID:-1000}"
+    ensure_neovim_ride_dirs "${HOST_USER_ID:-1000}" "${HOST_USER_GID:-1000}"
     # echo "Ride has the Same user id as host." >> /tmp/ride.log
     exit 0
 fi
@@ -37,7 +35,7 @@ if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0 ]]; then
   echo "Changing root home directory ..."
   sed -i -e '/root/s!\(.*:\).*:\(.*\)!\1/home/ride:\2!' /etc/passwd
   chown -R root:root /home/ride/.ssh
-  ensure_neovim_dirs root root
+  ensure_neovim_ride_dirs root root
 else
   echo "Remapping user and home directory ..."
   RIDE_USER_ID=${HOST_USER_ID:=$RIDE_USER_ID}
@@ -55,5 +53,5 @@ else
   sed -i -e "s/^${RIDE_USER}:\([^:]*\):[0-9]*/${RIDE_USER}:\1:${RIDE_USER_GID}/"  /etc/group
 
   chown ${RIDE_USER_ID}:${RIDE_USER_GID} ${RIDE_USER_HOME} /tmp/ride.log
-  ensure_neovim_dirs "${RIDE_USER_ID}" "${RIDE_USER_GID}"
+  ensure_neovim_ride_dirs "${RIDE_USER_ID}" "${RIDE_USER_GID}"
 fi
