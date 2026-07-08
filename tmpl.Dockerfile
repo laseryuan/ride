@@ -147,6 +147,7 @@ RUN \
 
 RUN set -ex; \
     git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
+    git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.config/nvim/bundle/Vundle.vim; \
     vim -u NONE -S ~/.vim/plugins.vim +PluginInstall +qall; \
     nvim --headless -u ~/.config/nvim/init.lua +PluginInstall +qall;
 

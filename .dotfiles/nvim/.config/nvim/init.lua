@@ -1,14 +1,13 @@
--- Keep Neovim on the same shared configuration as Vim without shipping a
--- second init.vim entrypoint. Recent Neovim versions reject configs that have
--- both init.lua and init.vim in the same directory.
-vim.env.DDPATH = vim.fn.expand('~/.vim')
+-- Keep Neovim configuration independent from Vim. Vim owns ~/.vim, while
+-- Neovim sources copied Vimscript settings from ~/.config/nvim so each editor
+-- can evolve without sharing config files.
+vim.env.DDPATH = vim.fn.expand('~/.config/nvim')
 
--- Store ShaDa outside ~/.vim so user-id remapping only needs to chown the
--- writable Neovim state tree created by bin/user-mapping.sh.
+-- Store ShaDa outside ~/.config/nvim so user-id remapping only needs to chown
+-- the writable Neovim state tree created by bin/user-mapping.sh.
 local shada_dir = vim.fn.expand('~/.ride/state/nvim/shada')
 vim.fn.mkdir(shada_dir, 'p')
 vim.o.shadafile = shada_dir .. '/main.shada'
-
 
 -- Neovim falls back to tmux as a clipboard provider when $TMUX is set. If tmux
 -- has no paste buffers yet, `tmux save-buffer -` prints "no buffers" during
@@ -29,8 +28,8 @@ if vim.env.TMUX ~= nil then
   }
 end
 
-vim.opt.runtimepath:prepend('~/.vim')
-vim.opt.runtimepath:append('~/.vim/after')
-vim.opt.packpath:prepend('~/.vim')
+vim.opt.runtimepath:prepend('~/.config/nvim')
+vim.opt.runtimepath:append('~/.config/nvim/after')
+vim.opt.packpath:prepend('~/.config/nvim')
 
-vim.cmd('source ~/.vim/vimrc')
+vim.cmd('source ~/.config/nvim/vimrc')
