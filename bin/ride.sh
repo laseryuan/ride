@@ -173,8 +173,7 @@ create-ride() {
     `# persist ssh config on host`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
     \
-    `# persist neovim on host`\
-    -v `get-folder "$HOME/.config/nvim"`:/home/ride/.config/nvim \
+    `# keep Neovim config from the image; cache/state persist under ~/.ride`\
     \
     `# git`\
     $(use-gitconfig-if-exists) \
