@@ -52,7 +52,9 @@ set tags+=tags;$HOME
 " }
 
 " Copy & Paste {{{
-    set pastetoggle=<F2>
+    if !has('nvim') && exists('&pastetoggle')
+        set pastetoggle=<F2>
+    endif
 " }}}
 
 " VimDiff {{{
