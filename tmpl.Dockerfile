@@ -138,11 +138,12 @@ RUN git config --global user.email "{{GIT_EMAIL}}" && \
   git config --global user.name "{{GIT_NAME}}" && \
   git config --global pull.ff only
 
-# Vim
+# Vim and Neovim
 COPY --chown=ride .dotfiles/vim .dotfiles/vim
+COPY --chown=ride .dotfiles/nvim .dotfiles/nvim
 RUN \
   cd .dotfiles && \
-  stow -t ~ vim
+  stow -t ~ vim nvim
 
 RUN set -ex; \
     git clone --depth 1 https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim; \
