@@ -21,7 +21,7 @@
 "   :1000 : up to 1000 lines of command-line history will be remembered
 "   n... : where to save the viminfo files
 if has("nvim")
-    set shada=%100,'100,/100,h,\"500,:1000,n~/.vim/shada
+    set shada=%100,'100,/100,h,\"500,:1000
 else
     set viminfo=%100,'100,/100,h,\"500,:1000,n~/.vim/viminfo
 endif
@@ -38,7 +38,11 @@ set tags+=tags;$HOME
       " set undofile
 
         " define a path to store persistent undo files.
-        let target_path = expand('~/.ride/vim/undo')
+        if has('nvim')
+            let target_path = expand('~/.ride/state/nvim/undo')
+        else
+            let target_path = expand('~/.ride/vim/undo')
+        endif
         " create the directory and any parent directories
         " if the location does not exist.
         if !isdirectory(target_path)
@@ -52,7 +56,9 @@ set tags+=tags;$HOME
 " }
 
 " Copy & Paste {{{
-    set pastetoggle=<F2>
+    if !has('nvim') && exists('&pastetoggle')
+        set pastetoggle=<F2>
+    endif
 " }}}
 
 " VimDiff {{{
