@@ -2,6 +2,9 @@
 # vim: set noswapfile :
 set -e
 
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-/home/ride/.ride/cache}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-/home/ride/.ride/state}"
+
 start_tmux() {
   SESSION_NAME=${HOST_NAME:-0}
   ${CHANGE_USER} tmux new-session -d -s "$SESSION_NAME" -n home bash

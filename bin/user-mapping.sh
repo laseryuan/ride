@@ -8,12 +8,13 @@ ensure_neovim_dirs() {
   local group_id="$2"
 
   mkdir -p \
-    /home/ride/.local/share/nvim \
-    /home/ride/.local/state/nvim \
-    /home/ride/.cache/nvim
+    /home/ride/.dotfiles/nvim/.local/share/nvim \
+    /home/ride/.ride/cache/nvim \
+    /home/ride/.ride/state/nvim
   chown -R "${owner_id}:${group_id}" \
-    /home/ride/.local \
-    /home/ride/.cache/nvim
+    /home/ride/.dotfiles/nvim/.local/share/nvim \
+    /home/ride/.ride/cache \
+    /home/ride/.ride/state
 }
 
 if [ -z "${RIDE_USER}" ]; then
@@ -27,6 +28,7 @@ fi
 
 # if host user id is the same as ride  we do not need to do anything
 if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000 ]]; then
+    ensure_neovim_dirs "${HOST_USER_ID:-1000}" "${HOST_USER_GID:-1000}"
     # echo "Ride has the Same user id as host." >> /tmp/ride.log
     exit 0
 fi
