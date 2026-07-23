@@ -1777,11 +1777,11 @@ yt-dlp(){
   local other_args
 
   parse_arg --name yt_dlp -r --dc --config /mnt/.config/yt-dlp --mount /mnt/data "$@"
-  [ -z "${other_args}" ] && { set -- bash; } || set -- yt-dlp "${other_args[@]}"
+  [ -z "${other_args}" ] && { set -- sh; } || set -- yt-dlp "${other_args[@]}"
   del_stopped yt_dlp
   $(if_debug_mode) docker run -it --rm \
     ${docker_option} \
-    ghcr.io/mikenye/docker-youtube-dl \
+    jauderho/yt-dlp \
     "$@"
 }
 
