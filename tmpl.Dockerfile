@@ -154,6 +154,7 @@ RUN set -ex; \
 # Dotfiles
 COPY --chown=ride .dotfiles .dotfiles
 RUN mkdir -p projects .ssh .kr .akr .config/chiff && \
+    install -d -m 700 .gnupg && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ tmux bash ssh && \

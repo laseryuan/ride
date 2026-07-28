@@ -29,6 +29,13 @@ docker run --rm --name=ride -it \
   ride
 ```
 
+When `ride` is launched through `bin/ride.sh`, available host GPG agent and
+GPG SSH-agent sockets are mounted automatically. GPG operations use the host
+agent, and `SSH_AUTH_SOCK` points at its SSH socket inside the container. Enable
+SSH support in the host agent (for example, with `enable-ssh-support` in
+`~/.gnupg/gpg-agent.conf`) before launching Ride if you want to use GPG-managed
+SSH keys.
+
 ## start ssh server
 ```
 sudo /usr/sbin/sshd
@@ -38,7 +45,7 @@ sudo /usr/sbin/sshd
 dev docker functions
 ```
 cd .dotfiles/bash/.bashrc.d/
-devsh
+devsh #(optional, use if need to debug)
 ./.dockerfunc.sh test
 ```
 
