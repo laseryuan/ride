@@ -47,6 +47,32 @@ use-gitconfig-if-exists() {
   fi
 }
 
+get-host-gpg-socket() {
+  local socket_name="$1"
+  local socket_path
+
+  command -v gpgconf >/dev/null 2>&1 || return 1
+  socket_path=$(gpgconf --list-dirs "$socket_name" 2>/dev/null) || return 1
+  [[ -S "$socket_path" ]] || return 1
+
+  echo "$socket_path"
+}
+
+host-gpg-socket-options() {
+  local agent_socket ssh_socket
+
+  if agent_socket=$(get-host-gpg-socket agent-socket); then
+    echo --mount \
+      "type=bind,src=${agent_socket},dst=/home/ride/.gnupg/S.gpg-agent"
+  fi
+
+  if ssh_socket=$(get-host-gpg-socket agent-ssh-socket); then
+    echo --mount \
+      "type=bind,src=${ssh_socket},dst=/home/ride/.gnupg/S.gpg-agent.ssh" \
+      --env SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh
+  fi
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -177,6 +203,8 @@ create-ride() {
     \
     `# git`\
     $(use-gitconfig-if-exists) \
+    `# use the host GPG agent for signing and SSH when its sockets are available`\
+    $(host-gpg-socket-options) \
     \
     `# additonal docker options`\
     $(user-docker-option-if-exists) \
@@ -189,6 +217,21 @@ create-ride() {
     \
     lasery/ride \
     ride "$@"
+}
+
+test() {
+  get-host-gpg-socket() {
+    case "$1" in
+      agent-socket) echo /run/user/1000/gnupg/S.gpg-agent ;;
+      agent-ssh-socket) echo /run/user/1000/gnupg/S.gpg-agent.ssh ;;
+    esac
+  }
+
+  local options
+  options=$(host-gpg-socket-options)
+  [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
+  [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.ssh,dst=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+  [[ "$options" == *"SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
 }
 
 ride-load() {
@@ -230,6 +273,9 @@ main() {
   create-ride "$@"
 }
 
-main "$@"
-
+if [[ "$1" == "test" ]]; then
+  test
+else
+  main "$@"
+fi
 
