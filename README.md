@@ -29,6 +29,69 @@ docker run --rm --name=ride -it \
   ride
 ```
 
+### Host SSH and GPG access
+
+When `ride` is launched through `bin/ride.sh`, it provides host credentials in
+two separate ways:
+
+- **SSH files:** the host's `~/.ssh` directory is mounted at `/home/ride/.ssh`.
+  This supplies SSH configuration, `known_hosts`, and regular key files. Changes
+  made in the container affect the host directory because it is a bind mount.
+  On Linux, Ride maps its user to the host UID/GID, so the mounted files retain
+  their host ownership while remaining accessible to the container user.
+- **GPG agent:** available host `S.gpg-agent` and `S.gpg-agent.ssh` sockets are
+  mounted directly under `/home/ride/.gnupg`, where GPG expects to find them.
+  GPG operations can then talk to the host agent without mounting the host's
+  entire GnuPG home. `SSH_AUTH_SOCK` points to the mounted GPG SSH-agent socket
+  when it is available. This forwarding does not require a `socat` process.
+
+Mounting the whole host `.gnupg` directory is not recommended: it exposes the
+host keyring, trust database, configuration, and lock files to container writes.
+Import any required public keys into the container keyring instead; private-key
+and smart-card operations remain in the host agent.
+
+To use GPG-managed SSH keys, enable SSH support in the host agent (for example,
+with `enable-ssh-support` in `~/.gnupg/gpg-agent.conf`) before launching Ride.
+
+#### Test smart-card access
+
+The smart card stays attached to the host. Run these checks inside Ride; the
+mounted socket sends requests to the host agent, which talks to the host's card
+and `scdaemon`:
+
+```bash
+# The first two commands verify that GPG sees the mounted host socket.
+gpgconf --list-dirs agent-socket
+test -S "$(gpgconf --list-dirs agent-socket)"
+stat -c '%u:%g %A %n' ~/.gnupg "$(gpgconf --list-dirs agent-socket)"
+id
+
+# Verify the agent connection, then ask the host scdaemon for the card serial.
+gpg-connect-agent /bye
+gpg-connect-agent 'SCD SERIALNO' /bye
+
+# This should print the card details and is the normal end-to-end check.
+gpg --card-status
+```
+
+The socket normally has owner-only permissions, and the host agent also checks
+the connecting user's identity. The numeric UID shown by `id` in Ride must match
+the socket owner's numeric UID shown by `stat`. If they differ, fix Ride's host
+user mapping rather than relaxing the socket permissions or adding a proxy.
+
+To test decryption, import only the public key if it is not already in the
+container keyring, then decrypt a file addressed to that key:
+
+```bash
+gpg --import public-key.asc
+gpg --decrypt encrypted-file.gpg > plaintext
+```
+
+The PIN prompt and private-key operation are handled by the host agent. A
+successful `--card-status` proves card access, but the decrypt command is the
+final test that the ciphertext recipient, container public key, card, and PIN
+flow all match. Do not start a separate `gpg-agent` in the container.
+
 ## start ssh server
 ```
 sudo /usr/sbin/sshd
