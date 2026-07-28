@@ -29,12 +29,23 @@ docker run --rm --name=ride -it \
   ride
 ```
 
-When `ride` is launched through `bin/ride.sh`, available host GPG agent and
-GPG SSH-agent sockets are mounted automatically. GPG operations use the host
-agent, and `SSH_AUTH_SOCK` points at its SSH socket inside the container. Enable
-SSH support in the host agent (for example, with `enable-ssh-support` in
-`~/.gnupg/gpg-agent.conf`) before launching Ride if you want to use GPG-managed
-SSH keys.
+### Host SSH and GPG access
+
+When `ride` is launched through `bin/ride.sh`, it provides host credentials in
+two separate ways:
+
+- **SSH files:** the host's `~/.ssh` directory is mounted at `/home/ride/.ssh`.
+  This supplies SSH configuration, `known_hosts`, and regular key files. Changes
+  made in the container affect the host directory because it is a bind mount.
+  On Linux, Ride maps its user to the host UID/GID, so the mounted files retain
+  their host ownership while remaining accessible to the container user.
+- **GPG agent:** available host `S.gpg-agent` and `S.gpg-agent.ssh` sockets are
+  mounted individually under `/home/ride/.gnupg`. GPG operations can talk to the
+  host agent without mounting the host's entire GnuPG home. `SSH_AUTH_SOCK`
+  points to the mounted GPG SSH-agent socket when that socket is available.
+
+To use GPG-managed SSH keys, enable SSH support in the host agent (for example,
+with `enable-ssh-support` in `~/.gnupg/gpg-agent.conf`) before launching Ride.
 
 ## start ssh server
 ```

@@ -47,6 +47,16 @@ use-gitconfig-if-exists() {
   fi
 }
 
+host-ssh-directory-options() {
+  local ssh_directory
+
+  # Keep the existing SSH behavior: share config, known_hosts, and ordinary
+  # private keys from the host. GPG-managed SSH keys use the agent socket below.
+  ssh_directory=$(get-folder "$HOME/.ssh")
+  echo --mount \
+    "type=bind,src=${ssh_directory},dst=/home/ride/.ssh"
+}
+
 get-host-gpg-socket() {
   local socket_name="$1"
   local socket_path
@@ -196,8 +206,8 @@ create-ride() {
     `# as host user`\
     $(map-user) \
     \
-    `# persist ssh config on host`\
-    -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
+    `# host SSH config, known_hosts, and ordinary key files`\
+    $(host-ssh-directory-options) \
     \
     `# keep Neovim config from the image; cache/state persist under ~/.ride`\
     \
@@ -220,6 +230,10 @@ create-ride() {
 }
 
 test() {
+  get-folder() {
+    echo "$1"
+  }
+
   get-host-gpg-socket() {
     case "$1" in
       agent-socket) echo /run/user/1000/gnupg/S.gpg-agent ;;
@@ -228,6 +242,10 @@ test() {
   }
 
   local options
+  local ssh_options
+  ssh_options=$(host-ssh-directory-options)
+  [[ "$ssh_options" == *"src=${HOME}/.ssh,dst=/home/ride/.ssh"* ]]
+
   options=$(host-gpg-socket-options)
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.ssh,dst=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
@@ -278,4 +296,3 @@ if [[ "$1" == "test" ]]; then
 else
   main "$@"
 fi
-
