@@ -47,6 +47,25 @@ use-gitconfig-if-exists() {
   fi
 }
 
+use-gpg-agent-if-exists() {
+  # gpg-agent (and its ssh-agent emulation) are only reachable via a local
+  # socket, so this only works when the host's docker daemon runs on Linux.
+  [ `get-os` = "Mac" ] && return
+
+  command -v gpgconf >/dev/null 2>&1 || return
+
+  local agent_socket ssh_socket gnupg_dir
+  agent_socket=`gpgconf --list-dir agent-socket 2>/dev/null`
+  [ -S "$agent_socket" ] || return
+
+  gnupg_dir=`dirname "$agent_socket"`
+  ssh_socket=`gpgconf --list-dir agent-ssh-socket 2>/dev/null`
+
+  echo \
+    -v "$gnupg_dir":"$gnupg_dir" \
+    $([ -S "$ssh_socket" ] && echo "-e SSH_AUTH_SOCK=$ssh_socket")
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -177,6 +196,9 @@ create-ride() {
     \
     `# git`\
     $(use-gitconfig-if-exists) \
+    \
+    `# gpg-agent socket (its ssh-agent emulation also covers ssh, if enabled on host)`\
+    $(use-gpg-agent-if-exists) \
     \
     `# additonal docker options`\
     $(user-docker-option-if-exists) \

@@ -34,6 +34,16 @@ docker run --rm --name=ride -it \
 sudo /usr/sbin/sshd
 ```
 
+## gpg-agent forwarding
+If the host has a Linux `gpg-agent` running (`gpgconf` installed and its
+`agent-socket` reachable), `bin/ride.sh` bind-mounts the agent's runtime
+socket directory into the container so `gpg` inside `ride` talks to the
+host's agent. If the host agent also has ssh-support enabled (its
+`agent-ssh-socket` exists), `SSH_AUTH_SOCK` is pointed at it too, so `ssh`
+inside the container authenticates through the host's gpg-agent instead of
+raw key files. Not available when the docker host is Mac, since a host
+socket can't be bind-mounted through the Docker Desktop VM.
+
 # Development
 dev docker functions
 ```
