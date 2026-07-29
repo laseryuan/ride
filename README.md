@@ -45,6 +45,14 @@ two separate ways:
   entire GnuPG home. `SSH_AUTH_SOCK` points to the mounted GPG SSH-agent socket
   when it is available. This forwarding does not require a `socat` process and
   is supported when the Docker daemon shares the host's Linux kernel.
+- **GPG keyring:** the host's `~/.gnupg` is mounted at the separate
+  `/home/ride/.gnupg-host` path. At startup, Ride links its persistent keyring,
+  trust, revocation data, and private-key stub entries into the container's
+  `~/.gnupg`. Agent sockets, lock files, and `random_seed` are deliberately not
+  linked, and host configuration is kept separate because it may contain
+  macOS-specific paths. This lets container GPG commands reuse the host keyring without
+  mistaking a macOS agent socket for a usable Linux socket. Keyring changes made
+  through those links write through to the host.
 
 Docker Desktop for Mac cannot expose a macOS Unix socket to its Linux VM with a
 **direct bind mount**. The mounted path can still pass `test -S` and show
@@ -62,10 +70,11 @@ bind-mounted macOS socket cannot work, because it still connects to the same
 cross-kernel endpoint. Ride does not configure a network bridge automatically,
 because doing so requires an explicit authentication and exposure policy.
 
-Mounting the whole host `.gnupg` directory is not recommended: it exposes the
-host keyring, trust database, configuration, and lock files to container writes.
-Import any required public keys into the container keyring instead; private-key
-and smart-card operations remain in the host agent.
+Ride exposes the host keyring read-write because key import, trust updates, and
+other normal GPG operations update it. Only use Ride images and code that you
+trust with those credentials. The directory is mounted at a staging path rather
+than directly over `~/.gnupg`, so host agent sockets and transient files can be
+excluded; private-key and smart-card operations still remain in the agent.
 
 To use GPG-managed SSH keys, enable SSH support in the host agent (for example,
 with `enable-ssh-support` in `~/.gnupg/gpg-agent.conf`) before launching Ride.
@@ -83,6 +92,19 @@ forwarding: supported`. On macOS, it intentionally exits unsuccessfully and
 reports that direct forwarding is unsupported; in that case the current Ride
 implementation will not provide YubiKey access until a separate remote-agent
 bridge is configured.
+
+You can also inspect the forwarding mode from inside a newly started container:
+
+```bash
+ride-gpg-check
+```
+
+On Linux this checks both the forwarded agent and `SCD SERIALNO`. On macOS it
+exits with a clear explanation. In particular, a successful
+`gpg-connect-agent /bye` by itself is **not** proof of forwarding: when no host
+socket is mounted, GnuPG can start a container-local agent. That local agent has
+no access to the Mac's USB devices or `scdaemon`, which produces the exact
+`No SmartCard daemon` error shown by `SCD SERIALNO` and `gpg --card-status`.
 
 After a successful Linux preflight, start a fresh Ride container. The smart card
 stays attached to the host. Run these checks inside Ride; the

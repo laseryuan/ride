@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+host_home=${RIDE_HOST_GNUPGHOME:-}
+container_home=${GNUPGHOME:-$HOME/.gnupg}
+
+[[ -n "$host_home" && -d "$host_home" ]] || exit 0
+
+mkdir -p "$container_home"
+chmod 700 "$container_home"
+
+shopt -s dotglob nullglob
+for source in "$host_home"/*; do
+  name=${source##*/}
+
+  # Share key material and trust state only. Host configuration can contain
+  # platform-specific programs and paths, while sockets, locks, and random_seed
+  # are process-local state that must not cross into the container.
+  case "$name" in
+    pubring.kbx|pubring.kbx~|pubring.gpg|secring.gpg|trustdb.gpg|tofu.db|\
+      private-keys-v1.d|openpgp-revocs.d|public-keys.d) ;;
+    *) continue ;;
+  esac
+  destination=$container_home/$name
+  rm -rf -- "$destination"
+  ln -s -- "$source" "$destination"
+done

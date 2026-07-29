@@ -57,6 +57,14 @@ host-ssh-directory-options() {
     "type=bind,src=${ssh_directory},dst=/home/ride/.ssh"
 }
 
+host-gnupg-directory-options() {
+  if [[ -d "$HOME/.gnupg" ]]; then
+    echo --mount \
+      "type=bind,src=${HOME}/.gnupg,dst=/home/ride/.gnupg-host" \
+      --env RIDE_HOST_GNUPGHOME=/home/ride/.gnupg-host
+  fi
+}
+
 get-host-gpg-socket() {
   local socket_name="$1"
   local socket_path
@@ -73,15 +81,22 @@ host-gpg-socket-options() {
 
   if [[ $(get-os) == Mac ]]; then
     cat >&2 <<'EOF'
-Ride: host GPG-agent sockets cannot be forwarded with a bind mount on Docker Desktop for Mac.
-The socket may appear in the container, but it belongs to the macOS kernel and a Linux process cannot connect to it.
+Ride: GPG smart-card forwarding is not active on Docker Desktop for Mac.
+Ride cannot bind-mount a macOS GPG-agent socket into its Linux container.
+Inside Ride, gpg-connect-agent may start a new container-local agent, but that
+agent cannot see the YubiKey attached to the Mac and will report "No SmartCard daemon".
+Run 'ride gpg-check' on the Mac for details.
 EOF
+    echo --env RIDE_GPG_FORWARDING=unsupported-macos
     return 0
   fi
 
   if agent_socket=$(get-host-gpg-socket agent-socket); then
     echo --mount \
-      "type=bind,src=${agent_socket},dst=/home/ride/.gnupg/S.gpg-agent"
+      "type=bind,src=${agent_socket},dst=/home/ride/.gnupg/S.gpg-agent" \
+      --env RIDE_GPG_FORWARDING=direct
+  else
+    echo --env RIDE_GPG_FORWARDING=unavailable
   fi
 
   if ssh_socket=$(get-host-gpg-socket agent-ssh-socket); then
@@ -252,6 +267,8 @@ create-ride() {
     \
     `# host SSH config, known_hosts, and ordinary key files`\
     $(host-ssh-directory-options) \
+    `# host GPG keyring files; agent sockets are handled separately below`\
+    $(host-gnupg-directory-options) \
     \
     `# keep Neovim config from the image; cache/state persist under ~/.ride`\
     \
@@ -299,8 +316,13 @@ test() {
 
   local options
   local ssh_options
+  local gnupg_options
   ssh_options=$(host-ssh-directory-options)
   [[ "$ssh_options" == *"src=${HOME}/.ssh,dst=/home/ride/.ssh"* ]]
+
+  gnupg_options=$(host-gnupg-directory-options)
+  [[ "$gnupg_options" == *"src=${HOME}/.gnupg,dst=/home/ride/.gnupg-host"* ]]
+  [[ "$gnupg_options" == *"RIDE_HOST_GNUPGHOME=/home/ride/.gnupg-host"* ]]
 
   options=$(host-gpg-socket-options)
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
@@ -313,7 +335,8 @@ test() {
     echo Mac
   }
   options=$(host-gpg-socket-options 2>/dev/null)
-  [[ -z "$options" ]]
+  [[ "$options" == *"RIDE_GPG_FORWARDING=unsupported-macos"* ]]
+  [[ "$options" != *"S.gpg-agent,dst="* ]]
   if check-host-gpg-forwarding >/dev/null 2>&1; then
     echo "TEST FAILURE: macOS preflight unexpectedly succeeded" >&2
     return 1

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -u
+
+case "${RIDE_GPG_FORWARDING:-unknown}" in
+  direct)
+    agent_socket=$(gpgconf --list-dirs agent-socket)
+    if [[ ! -S "$agent_socket" ]]; then
+      echo "Ride: the forwarded GPG-agent socket is missing: $agent_socket" >&2
+      exit 1
+    fi
+
+    echo "GPG forwarding: direct Linux socket"
+    echo "Agent socket: $agent_socket"
+    gpg-connect-agent /bye || exit 1
+    echo "GPG agent: reachable"
+    if ! gpg-connect-agent 'SCD SERIALNO' /bye; then
+      cat >&2 <<'EOF'
+Ride: the forwarded host agent is reachable, but it cannot access a smart card.
+Run the same SCD SERIALNO command on the Linux host and check its scdaemon,
+card reader, and YubiKey there.
+EOF
+      exit 1
+    fi
+    echo "Smart card: reachable"
+    ;;
+  unsupported-macos)
+    cat >&2 <<'EOF'
+GPG forwarding: unavailable on Docker Desktop for Mac
+
+The successful `gpg-connect-agent /bye` command only proves that GnuPG started
+or reached a container-local agent. That agent has no access to the YubiKey on
+the Mac, so `SCD SERIALNO` and `gpg --card-status` report "No SmartCard daemon".
+
+Run `ride gpg-check` on the Mac. Smart-card use requires a separately configured
+host-side bridge; direct Unix-socket bind mounting is not supported.
+EOF
+    exit 2
+    ;;
+  unavailable)
+    echo "GPG forwarding: unavailable (Ride found no live host agent socket at startup)" >&2
+    exit 1
+    ;;
+  *)
+    echo "GPG forwarding: unknown (this container was not started by an updated Ride launcher)" >&2
+    exit 1
+    ;;
+esac
