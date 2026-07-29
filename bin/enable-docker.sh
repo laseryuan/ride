@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ ! -S /var/run/docker.sock ]]; then
+    echo "Ride: /var/run/docker.sock was not mounted; Docker cannot be enabled." >&2
+    exit 1
+fi
+
 # if specify host docker group id we add user to this group
 if [ -n "${HOST_DOCKER_ID}" ]; then
     # echo "Adding user to host docker group id" >> /tmp/ride.log;

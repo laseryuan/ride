@@ -157,7 +157,8 @@ RUN mkdir -p projects .ssh .kr .akr .config/chiff && \
     rm ~/.bashrc && \
     cd .dotfiles && \
     stow -t ~ tmux bash ssh && \
-    chmod a+w -R /home/ride
+    chmod a+w -R /home/ride && \
+    install -d -m 700 /home/ride/.gnupg
 RUN chmod 600 .dotfiles/ssh/.ssh/config
 
 # mbuild
