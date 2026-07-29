@@ -47,10 +47,21 @@ use-gitconfig-if-exists() {
   fi
 }
 
+is-docker-host-mac() {
+  # get-os is unreliable for this: it asks a *container* for its uname,
+  # which is always Linux even under Docker Desktop for Mac. What matters
+  # here is the machine actually running this script (the docker CLI host).
+  [ "`uname -s 2>/dev/null`" = "Darwin" ]
+}
+
 use-gpg-agent-if-exists() {
-  # gpg-agent (and its ssh-agent emulation) are only reachable via a local
-  # socket, so this only works when the host's docker daemon runs on Linux.
-  [ `get-os` = "Mac" ] && return
+  # gpg-agent (and its ssh-agent emulation) are only reachable via a real
+  # Unix-domain-socket bind mount. Docker Desktop for Mac's file sharing
+  # (osxfs/virtiofs/sshfs) only forwards regular file I/O, not socket
+  # semantics - a bind-mounted gpg-agent socket there is just an inert file
+  # gpg can't connect() to - so this only works when the docker host is
+  # actually Linux. See use-mac-ssh-agent-if-exists for the Mac equivalent.
+  is-docker-host-mac && return
 
   command -v gpgconf >/dev/null 2>&1 || return
 
@@ -66,6 +77,21 @@ use-gpg-agent-if-exists() {
     $([ -S "$ssh_socket" ] && echo "-e SSH_AUTH_SOCK=$ssh_socket")
 }
 
+use-mac-ssh-agent-if-exists() {
+  # Docker Desktop for Mac proxies whatever the host's current SSH_AUTH_SOCK
+  # points at (system ssh-agent, or gpg-agent if ssh-support + SSH_AUTH_SOCK
+  # are set up on the Mac, 1Password, etc.) through a real socket relay at
+  # this fixed path - unlike a plain bind mount, so it actually works. This
+  # is the Mac-only equivalent of use-gpg-agent-if-exists' SSH_AUTH_SOCK
+  # forwarding; it does not give plain gpg (signing/decrypting) a working
+  # host-agent connection on Mac, only ssh.
+  is-docker-host-mac || return
+
+  echo \
+    -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
+    -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+}
+
 use-gpg-keyring-if-exists() {
   # Public keyring + trustdb + secret-key stubs (the stubs are all that's on
   # disk for smartcard-backed keys; the actual key material never leaves the
@@ -73,14 +99,16 @@ use-gpg-keyring-if-exists() {
   # the host's trustdb. Actual signing/decryption still happens on the host
   # via the forwarded agent socket from use-gpg-agent-if-exists, including
   # any smartcard prompts (PIN entry, card I/O) - that all runs host-side.
+  # (On Mac this only gets you `gpg -k`/-K style listing off the mounted
+  # keyring - see use-gpg-agent-if-exists for why signing/decrypting can't
+  # reach the host agent there. Regular file mounts work fine on Mac, so
+  # there's no Mac-host skip here.)
   #
   # Mounted at /home/ride/.gnupg without an explicit GNUPGHOME on purpose:
   # that's already gpg's default homedir for the ride user, and setting
   # GNUPGHOME explicitly makes gpg treat it as a non-standard homedir, which
   # makes it look for the agent socket *inside* it (read-only, no socket
   # there) instead of the real forwarded socket from use-gpg-agent-if-exists.
-  [ `get-os` = "Mac" ] && return
-
   local host_gnupghome="${GNUPGHOME:-$HOME/.gnupg}"
   [ -d "$host_gnupghome" ] || return
 
@@ -221,6 +249,8 @@ create-ride() {
     \
     `# gpg-agent socket (its ssh-agent emulation also covers ssh, if enabled on host)`\
     $(use-gpg-agent-if-exists) \
+    `# Mac equivalent of the ssh-agent forwarding above (real socket bind mounts don't work there)`\
+    $(use-mac-ssh-agent-if-exists) \
     `# gpg keyring/trustdb, so keys map to the smartcard-backed grips the host agent knows`\
     $(use-gpg-keyring-if-exists) \
     \
