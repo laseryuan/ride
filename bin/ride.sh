@@ -47,6 +47,50 @@ use-gitconfig-if-exists() {
   fi
 }
 
+host-ssh-directory-options() {
+  local ssh_directory
+
+  # Keep the existing SSH behavior: share config, known_hosts, and ordinary
+  # private keys from the host. GPG-managed SSH keys use the agent socket below.
+  ssh_directory=$(get-folder "$HOME/.ssh")
+  echo --mount \
+    "type=bind,src=${ssh_directory},dst=/home/ride/.ssh"
+}
+
+get-host-gpg-socket() {
+  local socket_name="$1"
+  local socket_path
+
+  command -v gpgconf >/dev/null 2>&1 || return 1
+  socket_path=$(gpgconf --list-dirs "$socket_name" 2>/dev/null) || return 1
+  [[ -S "$socket_path" ]] || return 1
+
+  echo "$socket_path"
+}
+
+host-gpg-socket-options() {
+  local agent_socket ssh_socket
+
+  if [[ $(get-os) == Mac ]]; then
+    cat >&2 <<'EOF'
+Ride: host GPG-agent sockets cannot be forwarded with a bind mount on Docker Desktop for Mac.
+The socket may appear in the container, but it belongs to the macOS kernel and a Linux process cannot connect to it.
+EOF
+    return 0
+  fi
+
+  if agent_socket=$(get-host-gpg-socket agent-socket); then
+    echo --mount \
+      "type=bind,src=${agent_socket},dst=/home/ride/.gnupg/S.gpg-agent"
+  fi
+
+  if ssh_socket=$(get-host-gpg-socket agent-ssh-socket); then
+    echo --mount \
+      "type=bind,src=${ssh_socket},dst=/home/ride/.gnupg/S.gpg-agent.ssh" \
+      --env SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh
+  fi
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -72,7 +116,9 @@ get-ride-name() {
 }
 
 get-os() {
-  unameOut="$( docker run --rm -it alpine uname -s )" 
+  # Inspect the client host, not a Linux container. The latter always reports
+  # Linux and caused macOS-only socket mounts to be treated as usable.
+  unameOut="$(uname -s)"
   case "${unameOut}" in
       Linux*)     machine=Linux;;
       Darwin*)    machine=Mac;;
@@ -170,13 +216,15 @@ create-ride() {
     `# as host user`\
     $(map-user) \
     \
-    `# persist ssh config on host`\
-    -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
+    `# host SSH config, known_hosts, and ordinary key files`\
+    $(host-ssh-directory-options) \
     \
     `# keep Neovim config from the image; cache/state persist under ~/.ride`\
     \
     `# git`\
     $(use-gitconfig-if-exists) \
+    `# use the host GPG agent for signing and SSH when its sockets are available`\
+    $(host-gpg-socket-options) \
     \
     `# additonal docker options`\
     $(user-docker-option-if-exists) \
@@ -189,6 +237,39 @@ create-ride() {
     \
     lasery/ride \
     ride "$@"
+}
+
+test() {
+  get-folder() {
+    echo "$1"
+  }
+
+  get-host-gpg-socket() {
+    case "$1" in
+      agent-socket) echo /run/user/1000/gnupg/S.gpg-agent ;;
+      agent-ssh-socket) echo /run/user/1000/gnupg/S.gpg-agent.ssh ;;
+    esac
+  }
+
+  get-os() {
+    echo Linux
+  }
+
+  local options
+  local ssh_options
+  ssh_options=$(host-ssh-directory-options)
+  [[ "$ssh_options" == *"src=${HOME}/.ssh,dst=/home/ride/.ssh"* ]]
+
+  options=$(host-gpg-socket-options)
+  [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
+  [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.ssh,dst=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+  [[ "$options" == *"SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+
+  get-os() {
+    echo Mac
+  }
+  options=$(host-gpg-socket-options 2>/dev/null)
+  [[ -z "$options" ]]
 }
 
 ride-load() {
@@ -230,6 +311,8 @@ main() {
   create-ride "$@"
 }
 
-main "$@"
-
-
+if [[ "$1" == "test" ]]; then
+  test
+else
+  main "$@"
+fi
