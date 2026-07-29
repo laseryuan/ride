@@ -35,26 +35,68 @@ sudo /usr/sbin/sshd
 ```
 
 ## gpg-agent forwarding
-If the host has a Linux `gpg-agent` running (`gpgconf` installed and its
-`agent-socket` reachable), `bin/ride.sh` bind-mounts the agent's runtime
-socket directory into the container so `gpg` inside `ride` talks to the
-host's agent. If the host agent also has ssh-support enabled (its
-`agent-ssh-socket` exists), `SSH_AUTH_SOCK` is pointed at it too, so `ssh`
-inside the container authenticates through the host's gpg-agent instead of
-raw key files. Not available when the docker host is Mac, since a host
-socket can't be bind-mounted through the Docker Desktop VM.
+Behavior differs by docker host, because Docker Desktop for Mac's file
+sharing (osxfs/virtiofs/sshfs) only forwards regular file I/O, not Unix
+socket semantics - a bind-mounted agent socket is just an inert file there,
+so plain bind mounts of live sockets only work when the docker host is
+actually Linux (including a Linux VM, e.g. Colima's).
 
-If the host's `$GNUPGHOME` (default `~/.gnupg`) exists, it's also
+**Linux docker host:** if the host has a `gpg-agent` running (`gpgconf`
+installed and its `agent-socket` reachable), `bin/ride.sh` bind-mounts the
+agent's runtime socket directory into the container so `gpg` inside `ride`
+talks to the host's agent. If the host agent also has ssh-support enabled
+(its `agent-ssh-socket` exists), `SSH_AUTH_SOCK` is pointed at it too, so
+`ssh` inside the container authenticates through the host's gpg-agent
+instead of raw key files.
+
+**Docker Desktop for Mac:** the direct socket mount above is skipped (see
+why above). Instead, `SSH_AUTH_SOCK` is pointed at
+`/run/host-services/ssh-auth.sock` - a real socket relay Docker Desktop for
+Mac provides to proxy whatever the host's current `SSH_AUTH_SOCK` is (system
+ssh-agent, gpg-agent if you've set up ssh-support + `SSH_AUTH_SOCK` on the
+Mac side, 1Password, etc.), so `ssh` in the container still works through
+the host's agent. Plain `gpg` (signing/decrypting) has no such relay
+available on Docker Desktop, so it can't reach the host's agent there - see
+the keyring paragraph below for what does still work.
+
+**Colima:** unlike Docker Desktop, Colima runs containers inside a real
+Lima-managed Linux VM, so once a socket is actually inside that VM, bind-
+mounting it into the container is a normal same-OS Linux mount - the same
+limitation Docker Desktop has doesn't apply. Getting the socket from the
+Mac into the VM in the first place is Lima's job, via a `portForwards`
+entry proxying it at the socket level (not a filesystem share) - add this
+to your Colima config (`colima start --edit`, default profile):
+```yaml
+portForwards:
+- guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent.extra"
+  hostSocket: "{{.Home}}/.gnupg/S.gpg-agent.extra"
+- guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent.ssh"   # optional, for ssh
+  hostSocket: "{{.Home}}/.gnupg/S.gpg-agent.ssh"
+```
+This forwards gpg-agent's *extra* socket rather than the full `agent-socket`
+- extra is deliberately restricted (sign/decrypt/encrypt only, no key
+management), which is more appropriate to expose to a disposable container.
+`bin/ride.sh` detects this (via `docker context show` = `colima`) and
+bind-mounts whichever of these two guest sockets it finds live (checked with
+`colima ssh`), renaming the gpg one to `S.gpg-agent` in the container so
+gpg's normal default-homedir socket discovery picks it up, and pointing
+`SSH_AUTH_SOCK` at the ssh one if present. `{{.UID}}` is assumed to render
+to the same uid as the Mac user, which is Lima's default behavior and
+matches the uid `ride` maps the container user to.
+
+Separately, if the host's `$GNUPGHOME` (default `~/.gnupg`) exists, it's
 bind-mounted read-only into the container at `/home/ride/.gnupg` - gpg's
 default homedir there, so this doesn't need (and must not set) an explicit
 `GNUPGHOME`; that would make gpg look for the agent socket inside this
-read-only mount instead of the real forwarded one. This is what lets a
-smartcard-backed key work from inside the container: the stub tells `gpg`
-which keygrip to ask for, and the actual signing/decryption - including any
-PIN prompt and card I/O - is carried out by the host's
-`gpg-agent`/`scdaemon` over the forwarded agent socket, never inside the
-container. The mount is read-only so a disposable container can't corrupt
-the host's trustdb.
+read-only mount instead of the real forwarded one. On Linux and Colima,
+this is what lets a smartcard-backed key work from inside the container:
+the stub tells `gpg` which keygrip to ask for, and the actual
+signing/decryption - including any PIN prompt and card I/O - is carried out
+by the host's `gpg-agent`/`scdaemon` over the forwarded agent socket, never
+inside the container. On Docker Desktop, without a working agent socket,
+this mount only gets you key listing (`gpg -k`/`-K`); it can't sign or
+decrypt via a smartcard. The mount is read-only in all cases, so a
+disposable container can't corrupt the host's trustdb.
 
 # Development
 dev docker functions
