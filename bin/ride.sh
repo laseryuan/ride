@@ -54,13 +54,22 @@ is-docker-host-mac() {
   [ "`uname -s 2>/dev/null`" = "Darwin" ]
 }
 
+is-docker-host-colima() {
+  [ "`docker context show 2>/dev/null`" = "colima" ]
+}
+
 use-gpg-agent-if-exists() {
   # gpg-agent (and its ssh-agent emulation) are only reachable via a real
   # Unix-domain-socket bind mount. Docker Desktop for Mac's file sharing
   # (osxfs/virtiofs/sshfs) only forwards regular file I/O, not socket
   # semantics - a bind-mounted gpg-agent socket there is just an inert file
   # gpg can't connect() to - so this only works when the docker host is
-  # actually Linux. See use-mac-ssh-agent-if-exists for the Mac equivalent.
+  # actually Linux. See use-mac-ssh-agent-if-exists for the Docker-Desktop-
+  # on-Mac equivalent, and use-colima-gpg-agent-if-exists for Colima, which
+  # doesn't have this limitation (containers run inside a real Lima Linux
+  # VM, so a socket that's actually inside that VM can be bind-mounted
+  # normally - getting it into the VM in the first place is what
+  # use-colima-gpg-agent-if-exists is for).
   is-docker-host-mac && return
 
   command -v gpgconf >/dev/null 2>&1 || return
@@ -82,14 +91,49 @@ use-mac-ssh-agent-if-exists() {
   # points at (system ssh-agent, or gpg-agent if ssh-support + SSH_AUTH_SOCK
   # are set up on the Mac, 1Password, etc.) through a real socket relay at
   # this fixed path - unlike a plain bind mount, so it actually works. This
-  # is the Mac-only equivalent of use-gpg-agent-if-exists' SSH_AUTH_SOCK
-  # forwarding; it does not give plain gpg (signing/decrypting) a working
-  # host-agent connection on Mac, only ssh.
+  # is the Docker-Desktop equivalent of use-gpg-agent-if-exists'
+  # SSH_AUTH_SOCK forwarding; it does not give plain gpg (signing/
+  # decrypting) a working host-agent connection on Mac, only ssh.
+  #
+  # This path is a Docker-Desktop-only feature - Colima doesn't provide it,
+  # so skip if Colima is the docker host (see use-colima-gpg-agent-if-exists).
   is-docker-host-mac || return
+  is-docker-host-colima && return
 
   echo \
     -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
     -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+}
+
+use-colima-gpg-agent-if-exists() {
+  # Colima runs containers inside a real Lima-managed Linux VM. Once a
+  # socket actually lives inside that VM, bind-mounting it into a container
+  # is a normal same-OS Linux mount - no osxfs/virtiofs limitation at all.
+  # Getting the socket from the Mac into the VM in the first place is a
+  # separate step done via Lima's own socket-level forwarding (portForwards
+  # with hostSocket/guestSocket in the colima/lima config), not by this
+  # script - see the README for the exact config this expects:
+  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent.extra  (gpg ops)
+  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent.ssh    (ssh, optional)
+  # forwarding the host's *extra* socket rather than the full agent-socket,
+  # since extra is deliberately restricted (sign/decrypt/encrypt only, no
+  # key management) - more appropriate to expose to a disposable container.
+  #
+  # {{.UID}} is assumed to render to the same uid as this Mac user (Lima's
+  # default behavior), matching the uid the ride container is mapped to.
+  is-docker-host-colima || return
+
+  local uid gnupg_guest_dir extra_socket ssh_socket
+  uid=`id -u`
+  gnupg_guest_dir="/run/user/${uid}/gnupg"
+  extra_socket="${gnupg_guest_dir}/S.gpg-agent.extra"
+  ssh_socket="${gnupg_guest_dir}/S.gpg-agent.ssh"
+
+  colima ssh -- test -S "$extra_socket" 2>/dev/null || return
+
+  echo \
+    -v "$extra_socket":"${gnupg_guest_dir}/S.gpg-agent" \
+    $(colima ssh -- test -S "$ssh_socket" 2>/dev/null && echo "-v $ssh_socket:$ssh_socket -e SSH_AUTH_SOCK=$ssh_socket")
 }
 
 use-gpg-keyring-if-exists() {
@@ -249,8 +293,10 @@ create-ride() {
     \
     `# gpg-agent socket (its ssh-agent emulation also covers ssh, if enabled on host)`\
     $(use-gpg-agent-if-exists) \
-    `# Mac equivalent of the ssh-agent forwarding above (real socket bind mounts don't work there)`\
+    `# Docker-Desktop-on-Mac equivalent of the ssh-agent forwarding above (real socket bind mounts don't work there)`\
     $(use-mac-ssh-agent-if-exists) \
+    `# Colima equivalent, covering both gpg ops and ssh via its own portForwards socket relay`\
+    $(use-colima-gpg-agent-if-exists) \
     `# gpg keyring/trustdb, so keys map to the smartcard-backed grips the host agent knows`\
     $(use-gpg-keyring-if-exists) \
     \
