@@ -134,7 +134,7 @@ sudo /usr/sbin/sshd
 dev docker functions
 ```
 cd .dotfiles/bash/.bashrc.d/
-devsh
+devsh #(optional, use if need to debug)
 ./.dockerfunc.sh test
 ```
 
