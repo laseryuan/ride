@@ -113,27 +113,35 @@ use-colima-gpg-agent-if-exists() {
   # separate step done via Lima's own socket-level forwarding (portForwards
   # with hostSocket/guestSocket in the colima/lima config), not by this
   # script - see the README for the exact config this expects:
-  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent.extra  (gpg ops)
-  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent.ssh    (ssh, optional)
-  # forwarding the host's *extra* socket rather than the full agent-socket,
-  # since extra is deliberately restricted (sign/decrypt/encrypt only, no
-  # key management) - more appropriate to expose to a disposable container.
+  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent      (gpg ops)
+  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent.ssh  (ssh, optional)
+  # forwarding the host's *extra* socket (hostSocket: .../S.gpg-agent.extra)
+  # rather than the full agent-socket, since extra is deliberately
+  # restricted (sign/decrypt/encrypt only, no key management) - more
+  # appropriate to expose to a disposable container. Note the guest side is
+  # named plain S.gpg-agent (not .extra): gpg only auto-discovers that name.
+  #
+  # Mounts the whole gnupg directory rather than the individual socket
+  # files: bind-mounting individual files makes docker synthesize the
+  # missing parent directories as root-owned, and gpg's socket-directory
+  # safety check rejects a runtime dir it doesn't own, silently falling
+  # back to ~/.gnupg (read-only) regardless of the socket file itself being
+  # reachable. Mounting the directory as a whole preserves its real
+  # ownership from the VM side instead.
   #
   # {{.UID}} is assumed to render to the same uid as this Mac user (Lima's
   # default behavior), matching the uid the ride container is mapped to.
   is-docker-host-colima || return
 
-  local uid gnupg_guest_dir extra_socket ssh_socket
+  local uid gnupg_guest_dir
   uid=`id -u`
   gnupg_guest_dir="/run/user/${uid}/gnupg"
-  extra_socket="${gnupg_guest_dir}/S.gpg-agent.extra"
-  ssh_socket="${gnupg_guest_dir}/S.gpg-agent.ssh"
 
-  colima ssh -- test -S "$extra_socket" 2>/dev/null || return
+  colima ssh -- test -S "${gnupg_guest_dir}/S.gpg-agent" 2>/dev/null || return
 
   echo \
-    -v "$extra_socket":"${gnupg_guest_dir}/S.gpg-agent" \
-    $(colima ssh -- test -S "$ssh_socket" 2>/dev/null && echo "-v $ssh_socket:$ssh_socket -e SSH_AUTH_SOCK=$ssh_socket")
+    -v "$gnupg_guest_dir":"$gnupg_guest_dir" \
+    $(colima ssh -- test -S "${gnupg_guest_dir}/S.gpg-agent.ssh" 2>/dev/null && echo "-e SSH_AUTH_SOCK=${gnupg_guest_dir}/S.gpg-agent.ssh")
 }
 
 use-gpg-keyring-if-exists() {

@@ -68,21 +68,32 @@ entry proxying it at the socket level (not a filesystem share) - add this
 to your Colima config (`colima start --edit`, default profile):
 ```yaml
 portForwards:
-- guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent.extra"
+- guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent"
   hostSocket: "{{.Home}}/.gnupg/S.gpg-agent.extra"
 - guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent.ssh"   # optional, for ssh
   hostSocket: "{{.Home}}/.gnupg/S.gpg-agent.ssh"
 ```
-This forwards gpg-agent's *extra* socket rather than the full `agent-socket`
-- extra is deliberately restricted (sign/decrypt/encrypt only, no key
-management), which is more appropriate to expose to a disposable container.
-`bin/ride.sh` detects this (via `docker context show` = `colima`) and
-bind-mounts whichever of these two guest sockets it finds live (checked with
-`colima ssh`), renaming the gpg one to `S.gpg-agent` in the container so
-gpg's normal default-homedir socket discovery picks it up, and pointing
-`SSH_AUTH_SOCK` at the ssh one if present. `{{.UID}}` is assumed to render
-to the same uid as the Mac user, which is Lima's default behavior and
-matches the uid `ride` maps the container user to.
+This forwards gpg-agent's *extra* socket (`hostSocket`) rather than the full
+`agent-socket` - extra is deliberately restricted (sign/decrypt/encrypt
+only, no key management), which is more appropriate to expose to a
+disposable container. Note the guest side is named plain `S.gpg-agent`, not
+`.extra`: gpg only auto-discovers that name, and (see below) the directory
+containing it has to be mounted as a whole, so it can't be renamed on the
+way into the container - it has to already have its final name on the
+Colima VM side.
+
+`bin/ride.sh` detects this (via `docker context show` = `colima`) and, if
+`/run/user/<uid>/gnupg/S.gpg-agent` is live (checked with `colima ssh`),
+bind-mounts that whole directory into the container - not the individual
+socket file. Bind-mounting an individual file makes docker synthesize the
+missing parent directories as root-owned, and gpg's socket-directory safety
+check rejects a runtime dir it doesn't own, silently falling back to
+`~/.gnupg` (read-only) even though the socket file itself is reachable;
+mounting the directory as a whole preserves its real ownership from the VM
+side instead. `SSH_AUTH_SOCK` is pointed at the `.ssh` socket in the same
+directory if that one's live too. `{{.UID}}` is assumed to render to the
+same uid as the Mac user, which is Lima's default behavior and matches the
+uid `ride` maps the container user to.
 
 Separately, if the host's `$GNUPGHOME` (default `~/.gnupg`) exists, it's
 bind-mounted read-only into the container at `/home/ride/.gnupg` - gpg's
