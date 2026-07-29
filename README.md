@@ -44,6 +44,16 @@ inside the container authenticates through the host's gpg-agent instead of
 raw key files. Not available when the docker host is Mac, since a host
 socket can't be bind-mounted through the Docker Desktop VM.
 
+If the host's `$GNUPGHOME` (default `~/.gnupg`) exists, it's also
+bind-mounted read-only into the container so `gpg` there sees the same
+public keyring, trustdb, and secret-key stubs as the host. This is what
+lets a smartcard-backed key work from inside the container: the stub tells
+`gpg` which keygrip to ask for, and the actual signing/decryption -
+including any PIN prompt and card I/O - is carried out by the host's
+`gpg-agent`/`scdaemon` over the forwarded agent socket, never inside the
+container. The mount is read-only so a disposable container can't corrupt
+the host's trustdb.
+
 # Development
 dev docker functions
 ```

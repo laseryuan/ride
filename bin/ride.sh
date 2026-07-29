@@ -66,6 +66,23 @@ use-gpg-agent-if-exists() {
     $([ -S "$ssh_socket" ] && echo "-e SSH_AUTH_SOCK=$ssh_socket")
 }
 
+use-gpg-keyring-if-exists() {
+  # Public keyring + trustdb + secret-key stubs (the stubs are all that's on
+  # disk for smartcard-backed keys; the actual key material never leaves the
+  # card). Mounted read-only so a stale/disposable container can't corrupt
+  # the host's trustdb. Actual signing/decryption still happens on the host
+  # via the forwarded agent socket from use-gpg-agent-if-exists, including
+  # any smartcard prompts (PIN entry, card I/O) - that all runs host-side.
+  [ `get-os` = "Mac" ] && return
+
+  local host_gnupghome="${GNUPGHOME:-$HOME/.gnupg}"
+  [ -d "$host_gnupghome" ] || return
+
+  echo \
+    -v "$host_gnupghome":/home/ride/.gnupg:ro \
+    -e GNUPGHOME=/home/ride/.gnupg
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -199,6 +216,8 @@ create-ride() {
     \
     `# gpg-agent socket (its ssh-agent emulation also covers ssh, if enabled on host)`\
     $(use-gpg-agent-if-exists) \
+    `# gpg keyring/trustdb, so keys map to the smartcard-backed grips the host agent knows`\
+    $(use-gpg-keyring-if-exists) \
     \
     `# additonal docker options`\
     $(user-docker-option-if-exists) \
