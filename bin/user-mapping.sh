@@ -15,6 +15,23 @@ ensure_neovim_ride_dirs() {
     /home/ride/.ride/state
 }
 
+ensure_run_user_dir() {
+  # /run/user/<uid> is where forwarded gpg-agent/ssh-agent sockets land
+  # (see bin/ride.sh's use-gpg-agent-if-exists / use-colima-gpg-agent-if-exists).
+  # If it doesn't already exist in the image, docker auto-creates it as a
+  # root-owned directory while setting up the bind mount underneath it -
+  # gpg's socket-directory safety check rejects that regardless of the
+  # socket itself being reachable, silently falling back to ~/.gnupg. Fix
+  # ownership here (non-recursive, so the mounted contents are untouched)
+  # while we're still root.
+  local owner_id="$1"
+  local group_id="$2"
+
+  mkdir -p "/run/user/${owner_id}"
+  chown "${owner_id}:${group_id}" "/run/user/${owner_id}"
+  chmod 700 "/run/user/${owner_id}"
+}
+
 if [ -z "${RIDE_USER}" ]; then
   echo "We need RIDE_USER to be set!"; exit 100
 fi
@@ -27,6 +44,7 @@ fi
 # if host user id is the same as ride  we do not need to do anything
 if [[ ${HOST_USER_ID} == 1000 || ${HOST_USER_GID} == 1000 ]]; then
     ensure_neovim_ride_dirs "${HOST_USER_ID:-1000}" "${HOST_USER_GID:-1000}"
+    ensure_run_user_dir "${HOST_USER_ID:-1000}" "${HOST_USER_GID:-1000}"
     # echo "Ride has the Same user id as host." >> /tmp/ride.log
     exit 0
 fi
@@ -36,6 +54,7 @@ if [[ ${HOST_USER_NAME} == "root" || ${HOST_USER_ID} == 0 ]]; then
   sed -i -e '/root/s!\(.*:\).*:\(.*\)!\1/home/ride:\2!' /etc/passwd
   chown -R root:root /home/ride/.ssh
   ensure_neovim_ride_dirs root root
+  ensure_run_user_dir 0 0
 else
   echo "Remapping user and home directory ..."
   RIDE_USER_ID=${HOST_USER_ID:=$RIDE_USER_ID}
@@ -54,4 +73,5 @@ else
 
   chown ${RIDE_USER_ID}:${RIDE_USER_GID} ${RIDE_USER_HOME} /tmp/ride.log
   ensure_neovim_ride_dirs "${RIDE_USER_ID}" "${RIDE_USER_GID}"
+  ensure_run_user_dir "${RIDE_USER_ID}" "${RIDE_USER_GID}"
 fi
