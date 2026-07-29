@@ -73,14 +73,19 @@ use-gpg-keyring-if-exists() {
   # the host's trustdb. Actual signing/decryption still happens on the host
   # via the forwarded agent socket from use-gpg-agent-if-exists, including
   # any smartcard prompts (PIN entry, card I/O) - that all runs host-side.
+  #
+  # Mounted at /home/ride/.gnupg without an explicit GNUPGHOME on purpose:
+  # that's already gpg's default homedir for the ride user, and setting
+  # GNUPGHOME explicitly makes gpg treat it as a non-standard homedir, which
+  # makes it look for the agent socket *inside* it (read-only, no socket
+  # there) instead of the real forwarded socket from use-gpg-agent-if-exists.
   [ `get-os` = "Mac" ] && return
 
   local host_gnupghome="${GNUPGHOME:-$HOME/.gnupg}"
   [ -d "$host_gnupghome" ] || return
 
   echo \
-    -v "$host_gnupghome":/home/ride/.gnupg:ro \
-    -e GNUPGHOME=/home/ride/.gnupg
+    -v "$host_gnupghome":/home/ride/.gnupg:ro
 }
 
 user-docker-option-if-exists() {
