@@ -30,6 +30,8 @@ main() {
         CHANGE_USER="gosu ride"
       fi
 
+      ${CHANGE_USER} link-host-gnupg-home
+
       [ -n "${SSH_MODE}" ] && {
         ${CHANGE_USER} sshstart
       }

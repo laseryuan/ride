@@ -47,6 +47,88 @@ use-gitconfig-if-exists() {
   fi
 }
 
+host-ssh-directory-options() {
+  local ssh_directory
+
+  # Keep the existing SSH behavior: share config, known_hosts, and ordinary
+  # private keys from the host. GPG-managed SSH keys use the agent socket below.
+  ssh_directory=$(get-folder "$HOME/.ssh")
+  echo --mount \
+    "type=bind,src=${ssh_directory},dst=/home/ride/.ssh"
+}
+
+host-gnupg-directory-options() {
+  if [[ -d "$HOME/.gnupg" ]]; then
+    echo --mount \
+      "type=bind,src=${HOME}/.gnupg,dst=/home/ride/.gnupg-host" \
+      --env RIDE_HOST_GNUPGHOME=/home/ride/.gnupg-host
+  fi
+}
+
+get-host-gpg-socket() {
+  local socket_name="$1"
+  local socket_path
+
+  command -v gpgconf >/dev/null 2>&1 || return 1
+  socket_path=$(gpgconf --list-dirs "$socket_name" 2>/dev/null) || return 1
+  [[ -S "$socket_path" ]] || return 1
+
+  echo "$socket_path"
+}
+
+host-gpg-socket-options() {
+  local extra_socket ssh_socket
+
+  if [[ $(get-os) == Mac ]]; then
+    cat >&2 <<'EOF'
+Ride: GPG smart-card forwarding is not active on Docker Desktop for Mac.
+Ride cannot bind-mount a macOS GPG-agent socket into its Linux container.
+Inside Ride, gpg-connect-agent may start a new container-local agent, but that
+agent cannot see the YubiKey attached to the Mac and will report "No SmartCard daemon".
+Run 'ride gpg-check' on the Mac for details.
+EOF
+    echo --env RIDE_GPG_FORWARDING=unsupported-macos
+    return 0
+  fi
+
+  # Use gpg-agent's restricted remote-use endpoint rather than exposing its
+  # unrestricted administrative socket to the container.
+  if extra_socket=$(get-host-gpg-socket agent-extra-socket); then
+    echo --mount \
+      "type=bind,src=${extra_socket},dst=/home/ride/.gnupg/S.gpg-agent" \
+      --env RIDE_GPG_FORWARDING=restricted-extra
+  else
+    echo --env RIDE_GPG_FORWARDING=unavailable
+  fi
+
+  if ssh_socket=$(get-host-gpg-socket agent-ssh-socket); then
+    echo --mount \
+      "type=bind,src=${ssh_socket},dst=/home/ride/.gnupg/S.gpg-agent.ssh" \
+      --env SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh
+  fi
+}
+
+check-host-gpg-forwarding() {
+  local host_os extra_socket
+
+  host_os=$(get-os)
+  echo "Host OS: ${host_os}"
+
+  if [[ "$host_os" == Mac ]]; then
+    echo "Direct GPG-agent socket forwarding: unsupported by Docker Desktop for Mac" >&2
+    echo "Ride will not mount the macOS socket into its Linux VM." >&2
+    return 1
+  fi
+
+  if ! extra_socket=$(get-host-gpg-socket agent-extra-socket); then
+    echo "Restricted GPG-agent forwarding: unavailable (no live extra socket)" >&2
+    return 1
+  fi
+
+  echo "Host agent extra socket: ${extra_socket}"
+  echo "Restricted GPG-agent forwarding: supported"
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -72,7 +154,9 @@ get-ride-name() {
 }
 
 get-os() {
-  unameOut="$( docker run --rm -it alpine uname -s )" 
+  # Inspect the client host, not a Linux container. The latter always reports
+  # Linux and caused macOS-only socket mounts to be treated as usable.
+  unameOut="$(uname -s)"
   case "${unameOut}" in
       Linux*)     machine=Linux;;
       Darwin*)    machine=Mac;;
@@ -87,16 +171,29 @@ get-docker-group-id() {
   if [ `get-os` = "Mac" ]; then
     echo
   else
-    # mount socket file from host machine and get group id of this file.
-    # the host machine is the machine running docker daemon, so it's not necessary
-    # the local machine
-    docker run --rm -i -v /var/run/docker.sock:/tmp/docker.sock alpine stat -c %g /tmp/docker.sock
-    # echo `sed -nr "s/^docker:.*:([0-9]+):.*/\1/p" /etc/group`
+    stat -c %g "$(get-docker-socket)"
   fi
 }
 
 get-docker-socket() {
   docker context inspect --format '{{.Endpoints.docker.Host}}' | sed 's/^unix:\/\///'
+}
+
+is-docker-socket-available() {
+  [[ -S "$1" ]]
+}
+
+docker-socket-options() {
+  local socket_path
+  socket_path=$(get-docker-socket) || return 1
+
+  if ! is-docker-socket-available "$socket_path"; then
+    echo "Ride: Docker context socket is unavailable: ${socket_path}" >&2
+    return 1
+  fi
+
+  echo --mount \
+    "type=bind,src=${socket_path},dst=/var/run/docker.sock"
 }
 
 add-host-ip() {
@@ -170,13 +267,17 @@ create-ride() {
     `# as host user`\
     $(map-user) \
     \
-    `# persist ssh config on host`\
-    -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
+    `# host SSH config, known_hosts, and ordinary key files`\
+    $(host-ssh-directory-options) \
+    `# host GPG keyring files; agent sockets are handled separately below`\
+    $(host-gnupg-directory-options) \
     \
     `# keep Neovim config from the image; cache/state persist under ~/.ride`\
     \
     `# git`\
     $(use-gitconfig-if-exists) \
+    `# use the host GPG agent for signing and SSH when its sockets are available`\
+    $(host-gpg-socket-options) \
     \
     `# additonal docker options`\
     $(user-docker-option-if-exists) \
@@ -184,11 +285,65 @@ create-ride() {
     `# docker in docker`\
     -e HOST_DOCKER_ID=`get-docker-group-id` \
     -v `get-folder "$HOME/.docker/"`:/home/ride/.docker/ \
-    -v /var/run/docker.sock:"$(get-docker-socket)" \
+    $(docker-socket-options) \
     $(add-host-ip) \
     \
     lasery/ride \
     ride "$@"
+}
+
+test() {
+  get-folder() {
+    echo "$1"
+  }
+
+  get-host-gpg-socket() {
+    case "$1" in
+      agent-extra-socket) echo /run/user/1000/gnupg/S.gpg-agent.extra ;;
+      agent-ssh-socket) echo /run/user/1000/gnupg/S.gpg-agent.ssh ;;
+    esac
+  }
+
+  get-os() {
+    echo Linux
+  }
+
+  get-docker-socket() {
+    echo /Users/ride/.docker/run/docker.sock
+  }
+
+  is-docker-socket-available() {
+    return 0
+  }
+
+  local options
+  local ssh_options
+  local gnupg_options
+  ssh_options=$(host-ssh-directory-options)
+  [[ "$ssh_options" == *"src=${HOME}/.ssh,dst=/home/ride/.ssh"* ]]
+
+  gnupg_options=$(host-gnupg-directory-options)
+  [[ "$gnupg_options" == *"src=${HOME}/.gnupg,dst=/home/ride/.gnupg-host"* ]]
+  [[ "$gnupg_options" == *"RIDE_HOST_GNUPGHOME=/home/ride/.gnupg-host"* ]]
+
+  options=$(host-gpg-socket-options)
+  [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.extra,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
+  [[ "$options" == *"RIDE_GPG_FORWARDING=restricted-extra"* ]]
+  [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.ssh,dst=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+  [[ "$options" == *"SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+  [[ $(check-host-gpg-forwarding) == *"Restricted GPG-agent forwarding: supported"* ]]
+  [[ $(docker-socket-options) == *"src=/Users/ride/.docker/run/docker.sock,dst=/var/run/docker.sock"* ]]
+
+  get-os() {
+    echo Mac
+  }
+  options=$(host-gpg-socket-options 2>/dev/null)
+  [[ "$options" == *"RIDE_GPG_FORWARDING=unsupported-macos"* ]]
+  [[ "$options" != *"S.gpg-agent,dst="* ]]
+  if check-host-gpg-forwarding >/dev/null 2>&1; then
+    echo "TEST FAILURE: macOS preflight unexpectedly succeeded" >&2
+    return 1
+  fi
 }
 
 ride-load() {
@@ -230,6 +385,8 @@ main() {
   create-ride "$@"
 }
 
-main "$@"
-
-
+case "$1" in
+  test) test ;;
+  gpg-check) check-host-gpg-forwarding ;;
+  *) main "$@" ;;
+esac
