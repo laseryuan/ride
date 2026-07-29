@@ -68,9 +68,9 @@ entry proxying it at the socket level (not a filesystem share) - add this
 to your Colima config (`colima start --edit`, default profile):
 ```yaml
 portForwards:
-- guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent"
+- guestSocket: "/run/user/{{.UID}}/ride-gnupg-forward/S.gpg-agent"
   hostSocket: "{{.Home}}/.gnupg/S.gpg-agent.extra"
-- guestSocket: "/run/user/{{.UID}}/gnupg/S.gpg-agent.ssh"   # optional, for ssh
+- guestSocket: "/run/user/{{.UID}}/ride-gnupg-forward/S.gpg-agent.ssh"   # optional, for ssh
   hostSocket: "{{.Home}}/.gnupg/S.gpg-agent.ssh"
 ```
 This forwards gpg-agent's *extra* socket (`hostSocket`) rather than the full
@@ -82,16 +82,30 @@ containing it has to be mounted as a whole, so it can't be renamed on the
 way into the container - it has to already have its final name on the
 Colima VM side.
 
+Also note the guest directory is deliberately **not**
+`/run/user/{{.UID}}/gnupg`: many Ubuntu-based Lima guest images run their
+own systemd-socket-activated `gpg-agent` in the VM's user session,
+permanently bound to that conventional path - Lima's forward would just
+lose that race and you'd silently end up talking to the VM's own empty,
+cardless agent instead of the one forwarded from your Mac (this actually
+happened - the giveaway was `gpg`'s "server is older than us" version
+warning naming a different gnupg version than the Mac's). Forwarding to a
+distinct, ride-specific guest path sidesteps the collision entirely.
+
 `bin/ride.sh` detects this (via `docker context show` = `colima`) and, if
-`/run/user/<uid>/gnupg/S.gpg-agent` is live (checked with `colima ssh`),
-bind-mounts that whole directory into the container - not the individual
-socket file. Bind-mounting an individual file makes docker synthesize the
-missing parent directories as root-owned, and gpg's socket-directory safety
-check rejects a runtime dir it doesn't own, silently falling back to
-`~/.gnupg` (read-only) even though the socket file itself is reachable;
-mounting the directory as a whole preserves its real ownership from the VM
-side instead. `SSH_AUTH_SOCK` is pointed at the `.ssh` socket in the same
-directory if that one's live too. `{{.UID}}` is assumed to render to the
+`/run/user/<uid>/ride-gnupg-forward/S.gpg-agent` is live (checked with
+`colima ssh`), bind-mounts that whole directory into the container at its
+own conventional `/run/user/<uid>/gnupg` - safe there, since containers
+don't run systemd user sessions and have no competing native agent to
+collide with. It mounts the directory as a whole rather than the
+individual socket file: bind-mounting an individual file makes docker
+synthesize the missing parent directories as root-owned, and gpg's
+socket-directory safety check rejects a runtime dir it doesn't own,
+silently falling back to `~/.gnupg` (read-only) even though the socket
+file itself is reachable; mounting the directory as a whole preserves its
+real ownership from the VM side instead. `SSH_AUTH_SOCK` is pointed at the
+`.ssh` socket in the same directory if that one's live too. `{{.UID}}` is
+assumed to render to the
 same uid as the Mac user, which is Lima's default behavior and matches the
 uid `ride` maps the container user to.
 

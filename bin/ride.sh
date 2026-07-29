@@ -113,35 +113,46 @@ use-colima-gpg-agent-if-exists() {
   # separate step done via Lima's own socket-level forwarding (portForwards
   # with hostSocket/guestSocket in the colima/lima config), not by this
   # script - see the README for the exact config this expects:
-  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent      (gpg ops)
-  #   guestSocket: /run/user/{{.UID}}/gnupg/S.gpg-agent.ssh  (ssh, optional)
+  #   guestSocket: /run/user/{{.UID}}/ride-gnupg-forward/S.gpg-agent      (gpg ops)
+  #   guestSocket: /run/user/{{.UID}}/ride-gnupg-forward/S.gpg-agent.ssh  (ssh, optional)
   # forwarding the host's *extra* socket (hostSocket: .../S.gpg-agent.extra)
   # rather than the full agent-socket, since extra is deliberately
   # restricted (sign/decrypt/encrypt only, no key management) - more
-  # appropriate to expose to a disposable container. Note the guest side is
-  # named plain S.gpg-agent (not .extra): gpg only auto-discovers that name.
+  # appropriate to expose to a disposable container.
   #
-  # Mounts the whole gnupg directory rather than the individual socket
-  # files: bind-mounting individual files makes docker synthesize the
-  # missing parent directories as root-owned, and gpg's socket-directory
-  # safety check rejects a runtime dir it doesn't own, silently falling
-  # back to ~/.gnupg (read-only) regardless of the socket file itself being
+  # The guest directory is deliberately NOT /run/user/{{.UID}}/gnupg: many
+  # Ubuntu (Lima's default guest OS) images run a systemd-socket-activated
+  # gpg-agent of their own in the VM's user session, permanently bound to
+  # that conventional path - Lima's forward would just lose that race. A
+  # distinct guest path sidesteps the collision entirely; the container
+  # side is still mounted at its own conventional /run/user/<uid>/gnupg
+  # (safe there - containers don't run systemd user sessions).
+  #
+  # Mounts the whole directory rather than individual socket files:
+  # bind-mounting individual files makes docker synthesize the missing
+  # parent directories as root-owned, and gpg's socket-directory safety
+  # check rejects a runtime dir it doesn't own, silently falling back to
+  # ~/.gnupg (read-only) regardless of the socket file itself being
   # reachable. Mounting the directory as a whole preserves its real
-  # ownership from the VM side instead.
+  # ownership from the VM side instead. Note the guest-side file is named
+  # plain S.gpg-agent (not .extra): gpg only auto-discovers that name, and
+  # a directory mount can't rename files inside it, so it must already have
+  # its final name on the Colima VM side.
   #
   # {{.UID}} is assumed to render to the same uid as this Mac user (Lima's
   # default behavior), matching the uid the ride container is mapped to.
   is-docker-host-colima || return
 
-  local uid gnupg_guest_dir
+  local uid gnupg_guest_dir gnupg_container_dir
   uid=`id -u`
-  gnupg_guest_dir="/run/user/${uid}/gnupg"
+  gnupg_guest_dir="/run/user/${uid}/ride-gnupg-forward"
+  gnupg_container_dir="/run/user/${uid}/gnupg"
 
   colima ssh -- test -S "${gnupg_guest_dir}/S.gpg-agent" 2>/dev/null || return
 
   echo \
-    -v "$gnupg_guest_dir":"$gnupg_guest_dir" \
-    $(colima ssh -- test -S "${gnupg_guest_dir}/S.gpg-agent.ssh" 2>/dev/null && echo "-e SSH_AUTH_SOCK=${gnupg_guest_dir}/S.gpg-agent.ssh")
+    -v "$gnupg_guest_dir":"$gnupg_container_dir" \
+    $(colima ssh -- test -S "${gnupg_guest_dir}/S.gpg-agent.ssh" 2>/dev/null && echo "-e SSH_AUTH_SOCK=${gnupg_container_dir}/S.gpg-agent.ssh")
 }
 
 use-gpg-keyring-if-exists() {
