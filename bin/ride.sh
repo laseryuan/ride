@@ -71,6 +71,14 @@ get-host-gpg-socket() {
 host-gpg-socket-options() {
   local agent_socket ssh_socket
 
+  if [[ $(get-os) == Mac ]]; then
+    cat >&2 <<'EOF'
+Ride: host GPG-agent sockets cannot be forwarded with a bind mount on Docker Desktop for Mac.
+The socket may appear in the container, but it belongs to the macOS kernel and a Linux process cannot connect to it.
+EOF
+    return 0
+  fi
+
   if agent_socket=$(get-host-gpg-socket agent-socket); then
     echo --mount \
       "type=bind,src=${agent_socket},dst=/home/ride/.gnupg/S.gpg-agent"
@@ -108,7 +116,9 @@ get-ride-name() {
 }
 
 get-os() {
-  unameOut="$( docker run --rm -it alpine uname -s )" 
+  # Inspect the client host, not a Linux container. The latter always reports
+  # Linux and caused macOS-only socket mounts to be treated as usable.
+  unameOut="$(uname -s)"
   case "${unameOut}" in
       Linux*)     machine=Linux;;
       Darwin*)    machine=Mac;;
@@ -241,6 +251,10 @@ test() {
     esac
   }
 
+  get-os() {
+    echo Linux
+  }
+
   local options
   local ssh_options
   ssh_options=$(host-ssh-directory-options)
@@ -250,6 +264,12 @@ test() {
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.ssh,dst=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
   [[ "$options" == *"SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+
+  get-os() {
+    echo Mac
+  }
+  options=$(host-gpg-socket-options 2>/dev/null)
+  [[ -z "$options" ]]
 }
 
 ride-load() {

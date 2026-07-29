@@ -43,7 +43,24 @@ two separate ways:
   mounted directly under `/home/ride/.gnupg`, where GPG expects to find them.
   GPG operations can then talk to the host agent without mounting the host's
   entire GnuPG home. `SSH_AUTH_SOCK` points to the mounted GPG SSH-agent socket
-  when it is available. This forwarding does not require a `socat` process.
+  when it is available. This forwarding does not require a `socat` process and
+  is supported when the Docker daemon shares the host's Linux kernel.
+
+Docker Desktop for Mac cannot expose a macOS Unix socket to its Linux VM with a
+**direct bind mount**. The mounted path can still pass `test -S` and show
+matching numeric ownership, but connection attempts fail because the endpoint
+belongs to the macOS kernel. Ride detects macOS and skips these misleading
+mounts.
+
+This does not mean that a container can never use a YubiKey attached to a Mac.
+Keep `gpg-agent` and `scdaemon` on macOS and forward the agent protocol across a
+real VM boundary transport—for example, OpenSSH Unix-socket forwarding from the
+host agent's restricted `agent-extra-socket`, or a deliberately configured
+host-side TCP bridge. The remote end should be exposed as the container's
+`S.gpg-agent`. Merely starting `socat` inside the container against the
+bind-mounted macOS socket cannot work, because it still connects to the same
+cross-kernel endpoint. Ride does not configure a network bridge automatically,
+because doing so requires an explicit authentication and exposure policy.
 
 Mounting the whole host `.gnupg` directory is not recommended: it exposes the
 host keyring, trust database, configuration, and lock files to container writes.
@@ -78,6 +95,9 @@ The socket normally has owner-only permissions, and the host agent also checks
 the connecting user's identity. The numeric UID shown by `id` in Ride must match
 the socket owner's numeric UID shown by `stat`. If they differ, fix Ride's host
 user mapping rather than relaxing the socket permissions or adding a proxy.
+If all ownership checks pass but `gpg-connect-agent /bye` fails on Docker
+Desktop for Mac, the cross-kernel limitation above—not `.gnupg` ownership—is the
+cause.
 
 To test decryption, import only the public key if it is not already in the
 container keyring, then decrypt a file addressed to that key:
