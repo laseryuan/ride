@@ -34,6 +34,26 @@ docker run --rm --name=ride -it \
 sudo /usr/sbin/sshd
 ```
 
+## gpg-agent forwarding
+If the host has a Linux `gpg-agent` running (`gpgconf` installed and its
+`agent-socket` reachable), `bin/ride.sh` bind-mounts the agent's runtime
+socket directory into the container so `gpg` inside `ride` talks to the
+host's agent. If the host agent also has ssh-support enabled (its
+`agent-ssh-socket` exists), `SSH_AUTH_SOCK` is pointed at it too, so `ssh`
+inside the container authenticates through the host's gpg-agent instead of
+raw key files. Not available when the docker host is Mac, since a host
+socket can't be bind-mounted through the Docker Desktop VM.
+
+If the host's `$GNUPGHOME` (default `~/.gnupg`) exists, it's also
+bind-mounted read-only into the container so `gpg` there sees the same
+public keyring, trustdb, and secret-key stubs as the host. This is what
+lets a smartcard-backed key work from inside the container: the stub tells
+`gpg` which keygrip to ask for, and the actual signing/decryption -
+including any PIN prompt and card I/O - is carried out by the host's
+`gpg-agent`/`scdaemon` over the forwarded agent socket, never inside the
+container. The mount is read-only so a disposable container can't corrupt
+the host's trustdb.
+
 # Development
 dev docker functions
 ```
