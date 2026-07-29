@@ -91,6 +91,27 @@ EOF
   fi
 }
 
+check-host-gpg-forwarding() {
+  local host_os agent_socket
+
+  host_os=$(get-os)
+  echo "Host OS: ${host_os}"
+
+  if [[ "$host_os" == Mac ]]; then
+    echo "Direct GPG-agent socket forwarding: unsupported by Docker Desktop for Mac" >&2
+    echo "Ride will not mount the macOS socket into its Linux VM." >&2
+    return 1
+  fi
+
+  if ! agent_socket=$(get-host-gpg-socket agent-socket); then
+    echo "Direct GPG-agent socket forwarding: unavailable (no live agent socket)" >&2
+    return 1
+  fi
+
+  echo "Host agent socket: ${agent_socket}"
+  echo "Direct GPG-agent socket forwarding: supported"
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -133,16 +154,29 @@ get-docker-group-id() {
   if [ `get-os` = "Mac" ]; then
     echo
   else
-    # mount socket file from host machine and get group id of this file.
-    # the host machine is the machine running docker daemon, so it's not necessary
-    # the local machine
-    docker run --rm -i -v /var/run/docker.sock:/tmp/docker.sock alpine stat -c %g /tmp/docker.sock
-    # echo `sed -nr "s/^docker:.*:([0-9]+):.*/\1/p" /etc/group`
+    stat -c %g "$(get-docker-socket)"
   fi
 }
 
 get-docker-socket() {
   docker context inspect --format '{{.Endpoints.docker.Host}}' | sed 's/^unix:\/\///'
+}
+
+is-docker-socket-available() {
+  [[ -S "$1" ]]
+}
+
+docker-socket-options() {
+  local socket_path
+  socket_path=$(get-docker-socket) || return 1
+
+  if ! is-docker-socket-available "$socket_path"; then
+    echo "Ride: Docker context socket is unavailable: ${socket_path}" >&2
+    return 1
+  fi
+
+  echo --mount \
+    "type=bind,src=${socket_path},dst=/var/run/docker.sock"
 }
 
 add-host-ip() {
@@ -232,7 +266,7 @@ create-ride() {
     `# docker in docker`\
     -e HOST_DOCKER_ID=`get-docker-group-id` \
     -v `get-folder "$HOME/.docker/"`:/home/ride/.docker/ \
-    -v /var/run/docker.sock:"$(get-docker-socket)" \
+    $(docker-socket-options) \
     $(add-host-ip) \
     \
     lasery/ride \
@@ -255,6 +289,14 @@ test() {
     echo Linux
   }
 
+  get-docker-socket() {
+    echo /Users/ride/.docker/run/docker.sock
+  }
+
+  is-docker-socket-available() {
+    return 0
+  }
+
   local options
   local ssh_options
   ssh_options=$(host-ssh-directory-options)
@@ -264,12 +306,18 @@ test() {
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent,dst=/home/ride/.gnupg/S.gpg-agent"* ]]
   [[ "$options" == *"src=/run/user/1000/gnupg/S.gpg-agent.ssh,dst=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
   [[ "$options" == *"SSH_AUTH_SOCK=/home/ride/.gnupg/S.gpg-agent.ssh"* ]]
+  [[ $(check-host-gpg-forwarding) == *"Direct GPG-agent socket forwarding: supported"* ]]
+  [[ $(docker-socket-options) == *"src=/Users/ride/.docker/run/docker.sock,dst=/var/run/docker.sock"* ]]
 
   get-os() {
     echo Mac
   }
   options=$(host-gpg-socket-options 2>/dev/null)
   [[ -z "$options" ]]
+  if check-host-gpg-forwarding >/dev/null 2>&1; then
+    echo "TEST FAILURE: macOS preflight unexpectedly succeeded" >&2
+    return 1
+  fi
 }
 
 ride-load() {
@@ -311,8 +359,8 @@ main() {
   create-ride "$@"
 }
 
-if [[ "$1" == "test" ]]; then
-  test
-else
-  main "$@"
-fi
+case "$1" in
+  test) test ;;
+  gpg-check) check-host-gpg-forwarding ;;
+  *) main "$@" ;;
+esac

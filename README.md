@@ -72,7 +72,20 @@ with `enable-ssh-support` in `~/.gnupg/gpg-agent.conf`) before launching Ride.
 
 #### Test smart-card access
 
-The smart card stays attached to the host. Run these checks inside Ride; the
+First, run the host-side preflight check before starting a new container:
+
+```bash
+ride gpg-check
+```
+
+On Linux, it must print a live host socket and `Direct GPG-agent socket
+forwarding: supported`. On macOS, it intentionally exits unsuccessfully and
+reports that direct forwarding is unsupported; in that case the current Ride
+implementation will not provide YubiKey access until a separate remote-agent
+bridge is configured.
+
+After a successful Linux preflight, start a fresh Ride container. The smart card
+stays attached to the host. Run these checks inside Ride; the
 mounted socket sends requests to the host agent, which talks to the host's card
 and `scdaemon`:
 
