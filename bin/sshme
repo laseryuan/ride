@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# The bash script file bin/sshme below has features:
-# * It works with sshstart:
-#
-# Please add this features:
-# * can load key from github by given option --key name
-#
-#  bin/sshstart:
-#  {{bin/sshstart}}
-#
-
-#  bin/sshme:
-
-#!/bin/bash
-
 usage() {
   cat <<'EOF'
 Usage: sshme [mount] [--key <name>] [user@server]
