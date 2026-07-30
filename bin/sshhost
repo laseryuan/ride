@@ -14,14 +14,35 @@ get_host_name() {
     fi
 }
 
+usage() {
+  cat <<'EOF'
+Usage: sshhost [options] [-- ] [command...]
+
+Connect to the host machine over SSH. The target is
+"$HOST_USER_NAME"@"$HOST_NAME", or "$HOST_USER_NAME"@host.docker.internal
+when that name resolves (e.g. from inside a container).
+
+Options:
+  --ssh <opt>   Pass an extra option through to the underlying ssh command
+                (may be given multiple times)
+  --debug       Print the ssh command instead of executing it
+  -h, --help    Show this help message and exit
+
+If a command (and optional arguments) is given after the options, it is
+run on the host non-interactively instead of starting a login shell.
+EOF
+}
+
 main() {
     local is_debug_mode
     local host_name
-    echo $1
+    local ssh_option
 
     while [[ "$#" -gt 0 ]]; do
         case $1 in
+            --ssh) ssh_option+=" $2 "; shift ;;
             --debug) is_debug_mode=0 ;;
+            -h|--help) usage; exit 0 ;;
             *) break ;;
         esac
         shift
@@ -30,7 +51,9 @@ main() {
     get_host_name
 
     $(if_debug) ssh \
-        "$HOST_USER_NAME"@"$host_name"
+        ${ssh_option} \
+        "$HOST_USER_NAME"@"$host_name" \
+        "$@"
 }
 
 main "$@"
