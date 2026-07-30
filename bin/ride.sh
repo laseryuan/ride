@@ -47,6 +47,33 @@ use-gitconfig-if-exists() {
   fi
 }
 
+is-mac() {
+  [ "$(uname -s)" = "Darwin" ]
+}
+
+is-colima() {
+  [[ "$(docker context show 2>/dev/null)" == colima* ]]
+}
+
+colima-ssh-agent-forwarded() {
+  is-mac || return 1
+  is-colima || return 1
+  command -v colima >/dev/null 2>&1 || return 1
+
+  # Colima forwards the host ssh-agent (when started with --ssh-agent) into
+  # the VM at the same path Docker Desktop uses, making it reachable from
+  # containers via a plain bind mount.
+  colima ssh -- test -S /run/host-services/ssh-auth.sock 2>/dev/null
+}
+
+use-forwarded-ssh-agent-if-available() {
+  if colima-ssh-agent-forwarded; then
+    echo \
+      -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
+      -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+  fi
+}
+
 user-docker-option-if-exists() {
   [ -z "$docker_option" ] || {
     echo "$docker_option"
@@ -172,6 +199,9 @@ create-ride() {
     \
     `# persist ssh config on host`\
     -v `get-folder "$HOME/.ssh"`:/home/ride/.ssh \
+    \
+    `# on Mac with Colima started using --ssh-agent, forward the host agent`\
+    $(use-forwarded-ssh-agent-if-available) \
     \
     `# keep Neovim config from the image; cache/state persist under ~/.ride`\
     \
