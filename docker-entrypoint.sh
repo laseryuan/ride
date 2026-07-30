@@ -49,7 +49,7 @@ main() {
       ;;
     install)
       shift
-      /doc/install.sh "$@"
+      /usr/local/bin/install.sh "$@"
       ;;
     *)
       exec "$@"
