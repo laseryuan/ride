@@ -17,6 +17,9 @@ Options:
   -L, --local <spec>   Extra -L forward passed to ssh (e.g. :3000:localhost:3000)
   -R, --remote <spec>  Extra -R forward passed to ssh
   --ssh <opt>          Pass an extra option through to the underlying ssh command
+
+  Any "~" in <spec>/<opt> above is expanded to $HOME, since quoting the
+  value as one argument otherwise prevents the shell from doing that itself.
   --mount              Restart sshstart in mount mode and forward its ssh port
   --debug              Print the ssh command instead of executing it
   -h, --help           Show this help message and exit
@@ -36,9 +39,9 @@ main() {
 
   while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -L|--local) ssh_option+=" -L $2 "; shift ;;
-        -R|--remote) ssh_option+=" -R $2 "; shift ;;
-        --ssh) ssh_option+=" $2 "; shift ;;
+        -L|--local) ssh_option+=" -L ${2//\~/$HOME} "; shift ;;
+        -R|--remote) ssh_option+=" -R ${2//\~/$HOME} "; shift ;;
+        --ssh) ssh_option+=" ${2//\~/$HOME} "; shift ;;
         --mount) mount_flag=0 ;;
         --debug) is_debug_mode=0 ;;
         -h|--help) usage; exit 0 ;;

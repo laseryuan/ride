@@ -24,7 +24,9 @@ when that name resolves (e.g. from inside a container).
 
 Options:
   --ssh <opt>   Pass an extra option through to the underlying ssh command
-                (may be given multiple times)
+                (may be given multiple times). Any "~" in <opt> is expanded
+                to $HOME, since quoting <opt> as one argument otherwise
+                prevents the shell from doing that itself.
   --debug       Print the ssh command instead of executing it
   -h, --help    Show this help message and exit
 
@@ -40,7 +42,7 @@ main() {
 
     while [[ "$#" -gt 0 ]]; do
         case $1 in
-            --ssh) ssh_option+=" $2 "; shift ;;
+            --ssh) ssh_option+=" ${2//\~/$HOME} "; shift ;;
             --debug) is_debug_mode=0 ;;
             -h|--help) usage; exit 0 ;;
             *) break ;;
