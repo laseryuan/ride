@@ -14,6 +14,27 @@
 
 #!/bin/bash
 
+usage() {
+  cat <<'EOF'
+Usage: sshme [mount] [--key <name>] [user@server]
+
+Connect to a device through the sish relay server. Runs sshstart first,
+then opens a reverse SSH tunnel to the target so it can be reached as
+[user@]server (the local ssh port is forwarded to the sish server).
+
+Options:
+  mount         Pass --mount to sshstart before connecting
+  --key <name>  Pass --key <name> to sshstart to load a key from GitHub
+  -h, --help    Show this help message and exit
+
+Arguments:
+  [user@]server  Target to register with sish. "user" becomes the remote
+                 forward name (ssh -R <user>:22:localhost:22) and "server"
+                 selects <server>.unsown.top. Defaults to "@sish" (empty
+                 forward name, server "sish").
+EOF
+}
+
 mount_flag=""
 key_option=""
 
@@ -21,6 +42,7 @@ while [[ "$#" -gt 0 ]]; do
   case "$1" in
     mount) mount_flag="--mount" ;;
     --key) key_option="--key $2"; shift ;;
+    -h|--help) usage; exit 0 ;;
     *) break ;;
   esac
   shift

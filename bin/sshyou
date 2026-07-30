@@ -6,6 +6,27 @@ if_debug() {
   }
 }
 
+usage() {
+  cat <<'EOF'
+Usage: sshyou [options] [user@]server
+
+Connect to a remote device by relaying through the sish jump host
+(sish.unsown.top), with the desktop VNC port and an ssh port forwarded.
+
+Options:
+  -L, --local <spec>   Extra -L forward passed to ssh (e.g. :3000:localhost:3000)
+  -R, --remote <spec>  Extra -R forward passed to ssh
+  --ssh <opt>          Pass an extra option through to the underlying ssh command
+  --mount              Restart sshstart in mount mode and forward its ssh port
+  --debug              Print the ssh command instead of executing it
+  -h, --help           Show this help message and exit
+
+Arguments:
+  [user@]server  Target to connect to. Defaults to user "ride" when no
+                 user is given.
+EOF
+}
+
 main() {
   local SSH_FORWARD_PORT=12322
 
@@ -20,6 +41,7 @@ main() {
         --ssh) ssh_option+=" $2 "; shift ;;
         --mount) mount_flag=0 ;;
         --debug) is_debug_mode=0 ;;
+        -h|--help) usage; exit 0 ;;
         *) break ;;
     esac
     shift
