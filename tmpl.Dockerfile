@@ -13,8 +13,8 @@ RUN \
       sudo gosu \
       apt-transport-https \
       ca-certificates \
-      gnupg \
       locales \
+      gnupg \
     `# help` \
       man \
     `# ssh` \
@@ -27,6 +27,7 @@ RUN \
       iputils-ping \
       iproute2 \
       netcat-openbsd socat \
+      rsync \
     `# source control` \
       git \
     `# dotfiles` \

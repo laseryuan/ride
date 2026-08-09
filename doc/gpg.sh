@@ -20,7 +20,8 @@ fetch
 quit
 
 # Test
-echo hello | gpg --clearsign
+echo hello | gpg -u "Laser Yuan" --clearsign
+echo "secret" | gpg -e -r "laser.yuan@gmail.com"
 
 # For ssh login
 # Mount host's agent socket to local
