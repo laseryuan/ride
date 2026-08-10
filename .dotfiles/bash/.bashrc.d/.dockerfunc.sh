@@ -84,6 +84,10 @@ use-sound-device-if-exists() {
 #
 # Helper Functions
 #
+check_os_arch(){
+  [[ "$(uname -m)" == "$1" ]]
+}
+
 dcleanup(){
   local containers
   mapfile -t containers < <(docker ps -aq 2>/dev/null)
@@ -1160,6 +1164,11 @@ rclone(){
   local debug_mode
   local config_host
   local other_args
+  local image="${DOCKER_REPO_PREFIX}/rclone"
+
+  if check_os_arch aarch64; then
+    image="rclone/rclone"
+  fi
 
   parse_arg --name rclone --dc --config /config/rclone --mount /tmp/data "$@"
   docker_option+=" --entrypoint= "
@@ -1167,7 +1176,7 @@ rclone(){
   del_stopped rclone
   $(if_debug_mode) docker run -it --rm \
     ${docker_option} \
-    rclone/rclone \
+    "${image}" \
     "$@"
 }
 
