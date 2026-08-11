@@ -66,11 +66,20 @@ colima-ssh-agent-forwarded() {
   colima ssh -- test -S /run/host-services/ssh-auth.sock 2>/dev/null
 }
 
+use-host-ssh-auth-sock-if-available() {
+  [[ -n "$SSH_AUTH_SOCK" && -S "$SSH_AUTH_SOCK" ]] && \
+    echo \
+      -v "$SSH_AUTH_SOCK":"$SSH_AUTH_SOCK" \
+      -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK"
+}
+
 use-forwarded-ssh-agent-if-available() {
   if colima-ssh-agent-forwarded; then
     echo \
       -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
       -e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+  else
+    use-host-ssh-auth-sock-if-available
   fi
 }
 
