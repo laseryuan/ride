@@ -1,8 +1,12 @@
 " Share clipboards between vim and tmux without xsel or xclip (which require X and
 " X forwarding with SSH) and without changing tmux shortcuts. Requires only tail.
-" 
+"
 " Great for an ssh session to you linode or droplet.
-" 
+"
+" Every yank (y, yy, yiw, visual y, ...) is automatically pushed into tmux's
+" paste buffer via TextYankPost, so it's available to tmux (prefix + ]) and
+" other panes right away.
+"
 " Uses z buffer in vim and writes output to ~/.vim-tmux-clipboard and then to tmux's paste
 " buffer, and reads it back in cleanly for putting (puddin').
 "
@@ -17,6 +21,23 @@
 vnoremap <leader>tmuxy "zy:silent! call SendZBufferToHomeDotClipboard()<cr>
 " Put from tmux clipboard
 map <leader>tmuxp :silent! call HomeDotClipboardPut()<cr>
+
+" Automatically forward every yank (y, yy, yiw, visual y, ...) to tmux's
+" paste buffer, so content copied in nvim is immediately available to tmux
+" (prefix + ]) and other panes/windows, no leader mapping needed.
+if exists('$TMUX')
+    function! s:SendYankToTmux(event) abort
+        if a:event.operator !=# 'y'
+            return
+        endif
+        call system('tmux load-buffer -w -', join(a:event.regcontents, "\n"))
+    endfunction
+
+    augroup vim_tmux_no_x_clipboard_autoyank
+        autocmd!
+        autocmd TextYankPost * call s:SendYankToTmux(v:event)
+    augroup END
+endif
 
 function! SendZBufferToHomeDotClipboard()
     " Yank the contents buffer z to file ~/.vim-tmux-clipboard and tmux paste buffer
