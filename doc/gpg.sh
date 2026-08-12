@@ -24,9 +24,12 @@ echo hello | gpg -u "Laser Yuan" --clearsign
 echo "secret" | gpg -e -r "laser.yuan@gmail.com"
 
 # For ssh login
-# Mount host's agent socket to local
+# Option 1: Mount host's agent socket to local through ssh
 sshhost --ssh "-L ~/.gnupg/S.gpg-agent.ssh:${HOST_HOME}/.gnupg/S.gpg-agent.ssh" # in a new terminal
-export SSH_AUTH_SOCK=~/.gnupg/S.gpg-agent.ssh
+
+# Option 2: set SSH_AUTH_SOCK before ride
+export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+echo $SSH_AUTH_SOCK
 
 # Test
 ssh-add -L
