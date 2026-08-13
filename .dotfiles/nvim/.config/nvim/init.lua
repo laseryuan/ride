@@ -26,6 +26,10 @@ if vim.env.TMUX ~= nil then
     },
     cache_enabled = 1,
   }
+
+  -- Make the unnamed register an alias for "+ so plain yy/dd/p transparently
+  -- share with the tmux buffer, instead of requiring "+y / "+p every time.
+  vim.opt.clipboard = 'unnamedplus'
 end
 
 vim.opt.runtimepath:prepend('~/.config/nvim')
