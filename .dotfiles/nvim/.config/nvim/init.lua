@@ -9,26 +9,30 @@ local shada_dir = vim.fn.expand('~/.ride/state/nvim/shada')
 vim.fn.mkdir(shada_dir, 'p')
 vim.o.shadafile = shada_dir .. '/main.shada'
 
--- Neovim falls back to tmux as a clipboard provider when $TMUX is set. If tmux
--- has no paste buffers yet, `tmux save-buffer -` prints "no buffers" during
--- clipboard probes. Route the tmux provider through a shell command that treats
--- an empty tmux buffer list as an empty clipboard instead of a startup warning.
+-- Neovim falls back to tmux as a clipboard provider when $TMUX is set, but
+-- `tmux load-buffer`/`save-buffer` only reach tmux's own paste buffer -- they
+-- never leave the pty, so they can't reach the host clipboard (e.g. macOS via
+-- iTerm2) the way tmux's own copy-mode does. Use OSC 52 instead: it's the
+-- same escape-sequence relay copy-mode already uses, so it reaches the real
+-- host clipboard through tmux (set-clipboard on in .tmux.conf), SSH, and
+-- docker alike. Requires the terminal to allow OSC 52 (e.g. iTerm2:
+-- Preferences > General > Selection > "Applications in terminal may access
+-- clipboard").
 if vim.env.TMUX ~= nil then
   vim.g.clipboard = {
-    name = 'tmux-no-warning',
+    name = 'OSC 52',
     copy = {
-      ['+'] = { 'sh', '-c', 'tmux load-buffer -' },
-      ['*'] = { 'sh', '-c', 'tmux load-buffer -' },
+      ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+      ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
     },
     paste = {
-      ['+'] = { 'sh', '-c', 'tmux save-buffer - 2>/dev/null || true' },
-      ['*'] = { 'sh', '-c', 'tmux save-buffer - 2>/dev/null || true' },
+      ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+      ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
     },
-    cache_enabled = 1,
   }
 
   -- Make the unnamed register an alias for "+ so plain yy/dd/p transparently
-  -- share with the tmux buffer, instead of requiring "+y / "+p every time.
+  -- share with the host clipboard, instead of requiring "+y / "+p every time.
   vim.opt.clipboard = 'unnamedplus'
 end
 
