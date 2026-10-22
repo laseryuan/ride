@@ -7,6 +7,8 @@ export XDG_STATE_HOME="${XDG_STATE_HOME:-/home/ride/.ride/state}"
 
 start_tmux() {
   SESSION_NAME=${HOST_NAME:-0}
+  # tmux rewrites "." and ":" to "_" in session names; match it so -t targets resolve
+  SESSION_NAME=${SESSION_NAME//[.:]/_}
   ${CHANGE_USER} tmux new-session -d -s "$SESSION_NAME" -n home bash
 }
 

@@ -158,7 +158,7 @@ add-host-ip() {
 }
 
 get-host-name() {
-  hostname | cut -c -10
+  hostname -s | cut -c -10
 }
 
 get-host-timezone() {
